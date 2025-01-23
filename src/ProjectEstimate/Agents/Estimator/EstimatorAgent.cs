@@ -70,8 +70,8 @@ internal class EstimatorAgent
         _chatCompletionService = _kernel.GetRequiredService<IChatCompletionService>();
 
         // Add a plugin (the LightsPlugin class is defined below)
-        _kernel.Plugins.AddFromType<LightsPlugin>("Lights");
-
+        // _kernel.Plugins.AddFromType<LightsPlugin>("Lights");
+        _kernel.Plugins.AddFromType<CalculatorPlugin>("Calculator");
         // Enable planning
         _openAiPromptExecutionSettings = new OpenAIPromptExecutionSettings
         {
