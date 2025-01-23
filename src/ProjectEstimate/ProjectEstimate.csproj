@@ -24,4 +24,8 @@
     <None Include="secrets.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Never" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Plugins\" />
+  </ItemGroup>
+
 </Project>
