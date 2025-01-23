@@ -2,7 +2,6 @@
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
-using ProjectEstimate.Agents.Estimator.Plugins;
 using ProjectEstimate.Configuration;
 using Serilog;
 
@@ -32,7 +31,7 @@ internal class EstimatorAgent
         await Console.Out.WriteAsync("User > ");
         string? userInput = await Console.In.ReadLineAsync(cancellationToken);
         if (string.IsNullOrEmpty(userInput)) return true;
-        
+
         // Add user input
         _history.AddUserMessage(userInput);
 
@@ -71,11 +70,20 @@ internal class EstimatorAgent
 
         // Add a plugin (the LightsPlugin class is defined below)
         // _kernel.Plugins.AddFromType<LightsPlugin>("Lights");
-        _kernel.Plugins.AddFromType<CalculatorPlugin>("Calculator");
+        // _kernel.Plugins.AddFromType<CalculatorPlugin>("Calculator");
         // Enable planning
         _openAiPromptExecutionSettings = new OpenAIPromptExecutionSettings
         {
-            FunctionChoiceBehavior = FunctionChoiceBehavior.Auto()
+            FunctionChoiceBehavior = FunctionChoiceBehavior.Auto(),
+            ChatSystemPrompt =
+                """
+                Assistant is a software development project estimator. It helps estimating the time and cost of software development projects.
+                Input consists of all gathered requirements for a software project. They can be functional or non-functional requirements.
+                Estimates are provided based on the project requirements and input from the architecture team.
+                Estimates are provided for each functional requirement in man-days.
+                Provide breakdown and explanation of the estimates for each functional requirement.
+                Do not answer questions that are not related to software development project estimation.
+                """
         };
 
         // Create a history store the conversation
