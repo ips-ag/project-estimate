@@ -2,6 +2,7 @@
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
+using ProjectEstimate.Agents.Analyst;
 using ProjectEstimate.Configuration;
 using Serilog;
 
@@ -9,31 +10,50 @@ namespace ProjectEstimate.Agents.Estimator;
 
 internal class EstimatorAgent
 {
+    private readonly IUserInteraction _userInteraction;
     private readonly IOptionsMonitor<AzureOpenAiSettings> _options;
+    private readonly AnalystAgent _analystAgent;
     private Kernel _kernel = null!;
     private IChatCompletionService _chatCompletionService = null!;
     private ChatHistory _history = null!;
     private OpenAIPromptExecutionSettings _openAiPromptExecutionSettings = null!;
 
-    public EstimatorAgent(IOptionsMonitor<AzureOpenAiSettings> options)
+    public EstimatorAgent(
+        IUserInteraction userInteraction,
+        IOptionsMonitor<AzureOpenAiSettings> options,
+        AnalystAgent analystAgent)
     {
+        _userInteraction = userInteraction;
         _options = options;
+        _analystAgent = analystAgent;
         Initialize();
     }
 
     /// <summary>
-    ///     Reads user input from the console. Writes agent output to the console.
+    ///     Reads user input and writes agent output.
     /// </summary>
     /// <param name="cancellationToken"></param>
     /// <returns>true if stopping condition was met, false otherwise</returns>
     public async Task<bool> ExecuteAsync(CancellationToken cancellationToken)
     {
-        await Console.Out.WriteAsync("User > ");
-        string? userInput = await Console.In.ReadLineAsync(cancellationToken);
+        string? userInput = await _userInteraction.ReadUserMessageAsync(cancellationToken);
         if (string.IsNullOrEmpty(userInput)) return true;
 
         // Add user input
         _history.AddUserMessage(userInput);
+
+        // consult analyst
+        do
+        {
+            string? verificationResult = await _analystAgent.VerifyRequirementsAsync(_history, cancellationToken);
+            if (verificationResult is null) return false;
+            _history.AddAssistantMessage(verificationResult);
+            await _userInteraction.WriteAssistantMessageAsync(verificationResult, cancellationToken);
+            if (verificationResult.Contains("Requirement verification complete")) break;
+            userInput = await _userInteraction.ReadUserMessageAsync(cancellationToken);
+            if (string.IsNullOrEmpty(userInput)) return true;
+            _history.AddUserMessage(userInput);
+        } while (true);
 
         // Get the response from the AI
         var result = await _chatCompletionService.GetChatMessageContentAsync(
@@ -43,7 +63,7 @@ internal class EstimatorAgent
             cancellationToken: cancellationToken);
 
         // Print the results
-        await Console.Out.WriteLineAsync("Assistant > " + result);
+        await _userInteraction.WriteAssistantMessageAsync(result.ToString(), cancellationToken);
 
         // Add the message from the agent to the chat history
         _history.AddMessage(result.Role, result.Content ?? string.Empty);

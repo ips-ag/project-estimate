@@ -3,6 +3,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using ProjectEstimate;
+using ProjectEstimate.Agents;
+using ProjectEstimate.Agents.Analyst;
 using ProjectEstimate.Agents.Estimator;
 using ProjectEstimate.Configuration;
 using Serilog;
@@ -35,7 +37,9 @@ try
             {
                 services.AddHostedService<ChatService>();
                 services.AddOptions<AzureOpenAiSettings>().BindConfiguration("Azure:OpenAi");
+                services.AddSingleton<IUserInteraction, ConsoleInteraction>();
                 services.AddSingleton<EstimatorAgent>();
+                services.AddSingleton<AnalystAgent>();
             });
     await host.RunConsoleAsync();
 }
