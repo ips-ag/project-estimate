@@ -2,7 +2,7 @@ using System.ComponentModel;
 using System.Text.Json.Serialization;
 using Microsoft.SemanticKernel;
 
-namespace ProjectEstimate.Plugins;
+namespace ProjectEstimate.Agents.Estimator.Plugins;
 
 public class LightsPlugin
 {
