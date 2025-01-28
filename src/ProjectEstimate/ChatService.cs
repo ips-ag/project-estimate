@@ -1,14 +1,14 @@
 ﻿using Microsoft.Extensions.Hosting;
-using ProjectEstimate.Agents.Estimator;
+using ProjectEstimate.Agents.Consultant;
 
 namespace ProjectEstimate;
 
 internal class ChatService : BackgroundService
 {
-    private readonly EstimatorAgent _agent;
+    private readonly ConsultantAgent _agent;
     private readonly IHostApplicationLifetime _applicationLifetime;
 
-    public ChatService(EstimatorAgent agent, IHostApplicationLifetime applicationLifetime)
+    public ChatService(ConsultantAgent agent, IHostApplicationLifetime applicationLifetime)
     {
         _agent = agent;
         _applicationLifetime = applicationLifetime;

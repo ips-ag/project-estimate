@@ -6,9 +6,9 @@ using ProjectEstimate.Agents.Analyst;
 using ProjectEstimate.Configuration;
 using Serilog;
 
-namespace ProjectEstimate.Agents.Estimator;
+namespace ProjectEstimate.Agents.Consultant;
 
-internal class EstimatorAgent
+internal class ConsultantAgent
 {
     private readonly IUserInteraction _userInteraction;
     private readonly IOptionsMonitor<AzureOpenAiSettings> _options;
@@ -18,7 +18,7 @@ internal class EstimatorAgent
     private ChatHistory _history = null!;
     private OpenAIPromptExecutionSettings _openAiPromptExecutionSettings = null!;
 
-    public EstimatorAgent(
+    public ConsultantAgent(
         IUserInteraction userInteraction,
         IOptionsMonitor<AzureOpenAiSettings> options,
         AnalystAgent analystAgent)
@@ -45,14 +45,19 @@ internal class EstimatorAgent
         // consult analyst
         do
         {
-            string? verificationResult = await _analystAgent.VerifyRequirementsAsync(_history, cancellationToken);
+            var verificationResult = await _analystAgent.VerifyRequirementsAsync(_history, cancellationToken);
             if (verificationResult is null) return false;
-            _history.AddAssistantMessage(verificationResult);
-            await _userInteraction.WriteAssistantMessageAsync(verificationResult, cancellationToken);
-            if (verificationResult.Contains("Requirement verification complete")) break;
-            userInput = await _userInteraction.ReadUserMessageAsync(cancellationToken);
-            if (string.IsNullOrEmpty(userInput)) return true;
-            _history.AddUserMessage(userInput);
+            if (verificationResult.RequirementsComplete) break;
+            foreach (var question in verificationResult.Questions)
+            {
+                await _userInteraction.WriteAssistantMessageAsync(
+                    $"{question.Value} ({question.Explanation})",
+                    cancellationToken);
+                userInput = await _userInteraction.ReadUserMessageAsync(cancellationToken);
+                if (string.IsNullOrEmpty(userInput)) return true;
+                _history.AddAssistantMessage(question.Value);
+                _history.AddUserMessage(userInput);
+            }
         } while (true);
 
         // Get the response from the AI
@@ -100,7 +105,7 @@ internal class EstimatorAgent
                 Assistant is a software development project estimator. It helps estimating the time and cost of software development projects.
                 Input consists of all gathered requirements for a software project. They can be functional or non-functional requirements.
                 Estimates are provided based on the project requirements and input from the architecture team.
-                Estimates are provided for each functional requirement in man-days.
+                Estimates are provided for each functional requirement in man-days. Can be fractional, e.g. 0.25, 0.5, 1.25, etc.
                 Provide breakdown and explanation of the estimates for each functional requirement.
                 Do not answer questions that are not related to software development project estimation.
                 """

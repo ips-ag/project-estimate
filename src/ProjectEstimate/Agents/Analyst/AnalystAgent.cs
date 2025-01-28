@@ -1,7 +1,9 @@
-﻿using Microsoft.Extensions.Options;
+﻿using System.Text.Json;
+using Microsoft.Extensions.Options;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
+using ProjectEstimate.Agents.Analyst.Models;
 using ProjectEstimate.Configuration;
 using Serilog;
 
@@ -20,14 +22,18 @@ internal class AnalystAgent
         Initialize();
     }
 
-    public async ValueTask<string?> VerifyRequirementsAsync(ChatHistory history, CancellationToken cancel)
+    public async ValueTask<VerifyRequirementsResponseModel?> VerifyRequirementsAsync(
+        ChatHistory history,
+        CancellationToken cancel)
     {
         var result = await _chatCompletionService.GetChatMessageContentAsync(
             history,
             executionSettings: _openAiPromptExecutionSettings,
             kernel: _kernel,
             cancellationToken: cancel);
-        return result.Content;
+        if (result.Content is null) return null;
+        history.AddAssistantMessage(result.Content);
+        return JsonSerializer.Deserialize<VerifyRequirementsResponseModel>(result.Content);
     }
 
     private void Initialize()
@@ -54,11 +60,29 @@ internal class AnalystAgent
             FunctionChoiceBehavior = FunctionChoiceBehavior.Auto(),
             ChatSystemPrompt =
                 """
-                Assistant is a business analysts. It to verify project requirements.
+                Assistant is a business analysts. It verifies project requirements.
                 Input consists of all gathered requirements for a software project. They can be functional or non-functional requirements.
-                If requirements are not complete, output consists of a message 'Requirements not clear' and list of additional questions that need answering before project can be estimated.
-                If no questions need answering, the output should only say 'Requirement verification complete'.
-                Provide breakdown and explanation of each question in the output.
+                Output is in the JSON format. It consists of a boolean field 'requirementsComplete' and optional array of questions. Each question contains a value and explanation.
+                Maximum 2 questions can be asked.
+                Output example when requirements are not complete:
+                {
+                  "requirementsComplete": false,
+                  "questions": [
+                    {
+                      "value": "What is the target audience for the software?",
+                      "explanation": "This question is important to understand the user base and design the software accordingly."
+                    },
+                    {
+                      "value": "What is the expected load on the system?",
+                      "explanation": "This question is important to design the system architecture and estimate the hardware requirements."
+                    }
+                  ]
+                }
+                Output example when requirements are complete:
+                {
+                  "requirementsComplete": true
+                }
+                Provide explanation of each question in the output.
                 Do not answer requests that are not related to project requirements analysis.
                 """
         };
