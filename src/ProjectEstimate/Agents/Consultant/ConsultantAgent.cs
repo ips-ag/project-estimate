@@ -43,22 +43,7 @@ internal class ConsultantAgent
         _history.AddUserMessage(userInput);
 
         // consult analyst
-        do
-        {
-            var verificationResult = await _analystAgent.VerifyRequirementsAsync(_history, cancellationToken);
-            if (verificationResult is null) return false;
-            if (verificationResult.RequirementsComplete) break;
-            foreach (var question in verificationResult.Questions)
-            {
-                await _userInteraction.WriteAssistantMessageAsync(
-                    $"{question.Value} ({question.Explanation})",
-                    cancellationToken);
-                userInput = await _userInteraction.ReadUserMessageAsync(cancellationToken);
-                if (string.IsNullOrEmpty(userInput)) return true;
-                _history.AddAssistantMessage(question.Value);
-                _history.AddUserMessage(userInput);
-            }
-        } while (true);
+        await _analystAgent.VerifyRequirementsAsync(_history, cancellationToken);
 
         // Get the response from the AI
         var result = await _chatCompletionService.GetChatMessageContentAsync(
