@@ -2,6 +2,7 @@
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
+using ProjectEstimate.Agents.Analyst.Models;
 using ProjectEstimate.Configuration;
 using Serilog;
 
@@ -10,24 +11,40 @@ namespace ProjectEstimate.Agents.Analyst;
 internal class AnalystAgent
 {
     private readonly IOptionsMonitor<AzureOpenAiSettings> _options;
+    private readonly IUserInteraction _userInteraction;
     private Kernel _kernel = null!;
     private IChatCompletionService _chatCompletionService = null!;
     private OpenAIPromptExecutionSettings _openAiPromptExecutionSettings = null!;
 
-    public AnalystAgent(IOptionsMonitor<AzureOpenAiSettings> options)
+    public AnalystAgent(IOptionsMonitor<AzureOpenAiSettings> options, IUserInteraction userInteraction)
     {
         _options = options;
+        _userInteraction = userInteraction;
         Initialize();
     }
 
-    public async ValueTask<string?> VerifyRequirementsAsync(ChatHistory history, CancellationToken cancel)
+    public async ValueTask<List<RequirementVerificationModel>> VerifyRequirementsAsync(
+        ChatHistory history,
+        CancellationToken cancel)
     {
-        var result = await _chatCompletionService.GetChatMessageContentAsync(
-            history,
-            executionSettings: _openAiPromptExecutionSettings,
-            kernel: _kernel,
-            cancellationToken: cancel);
-        return result.Content;
+        List<RequirementVerificationModel> verifications = [];
+        do
+        {
+            var result = await _chatCompletionService.GetChatMessageContentAsync(
+                history,
+                executionSettings: _openAiPromptExecutionSettings,
+                kernel: _kernel,
+                cancellationToken: cancel);
+            if (result.Content is null) break;
+            history.AddAssistantMessage(result.Content);
+            await _userInteraction.WriteAssistantMessageAsync(result.Content, cancel);
+            if (result.Content.Contains("Requirement analysis complete")) break;
+            string? userInput = await _userInteraction.ReadUserMessageAsync(cancel);
+            if (userInput is null) break;
+            history.AddUserMessage(userInput);
+            verifications.Add(new RequirementVerificationModel(result.Content, userInput));
+        } while (true);
+        return verifications;
     }
 
     private void Initialize()
@@ -54,15 +71,13 @@ internal class AnalystAgent
             FunctionChoiceBehavior = FunctionChoiceBehavior.Auto(),
             ChatSystemPrompt =
                 """
-                Assistant is a business analysts. It to verify project requirements.
+                Assistant is a business analysts. It verifies project requirements.
                 Input consists of all gathered requirements for a software project. They can be functional or non-functional requirements.
-                If requirements are not complete, output consists of a message 'Requirements not clear' and list of additional questions that need answering before project can be estimated.
-                If no questions need answering, the output should only say 'Requirement verification complete'.
-                Provide breakdown and explanation of each question in the output.
+                Ask questions to clarify the requirements. Maximum 2 questions can be asked. Ask questions one by one. Do not number the questions.
+                When requirements are complete, respond with 'Requirement analysis complete'.
+                Provide explanation of each question in the output. Explanation should be put in brackets and follow the question.
                 Do not answer requests that are not related to project requirements analysis.
                 """
         };
-
-        // Create a history store the conversation
     }
 }

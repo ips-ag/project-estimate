@@ -1,28 +1,31 @@
 ﻿using Microsoft.Extensions.Hosting;
-using ProjectEstimate.Agents.Estimator;
+using Microsoft.Extensions.Logging;
+using ProjectEstimate.Agents.Consultant;
 
 namespace ProjectEstimate;
 
 internal class ChatService : BackgroundService
 {
-    private readonly EstimatorAgent _agent;
+    private readonly ConsultantAgent _agent;
     private readonly IHostApplicationLifetime _applicationLifetime;
+    private readonly ILogger<ChatService> _logger;
 
-    public ChatService(EstimatorAgent agent, IHostApplicationLifetime applicationLifetime)
+    public ChatService(ConsultantAgent agent, IHostApplicationLifetime applicationLifetime, ILogger<ChatService> logger)
     {
         _agent = agent;
         _applicationLifetime = applicationLifetime;
+        _logger = logger;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         try
         {
-            while (!stoppingToken.IsCancellationRequested)
-            {
-                bool shouldStop = await _agent.ExecuteAsync(stoppingToken);
-                if (shouldStop) break;
-            }
+            await _agent.ExecuteAsync(stoppingToken);
+        }
+        catch (Exception e)
+        {
+            _logger.LogCritical(e, "Unhandled exception occurred");
         }
         finally
         {

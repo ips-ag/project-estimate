@@ -5,7 +5,9 @@ using Microsoft.Extensions.Logging;
 using ProjectEstimate;
 using ProjectEstimate.Agents;
 using ProjectEstimate.Agents.Analyst;
-using ProjectEstimate.Agents.Estimator;
+using ProjectEstimate.Agents.Architect;
+using ProjectEstimate.Agents.Consultant;
+using ProjectEstimate.Agents.Developer;
 using ProjectEstimate.Configuration;
 using Serilog;
 using Serilog.Exceptions;
@@ -38,8 +40,10 @@ try
                 services.AddHostedService<ChatService>();
                 services.AddOptions<AzureOpenAiSettings>().BindConfiguration("Azure:OpenAi");
                 services.AddSingleton<IUserInteraction, ConsoleInteraction>();
-                services.AddSingleton<EstimatorAgent>();
+                services.AddSingleton<ConsultantAgent>();
                 services.AddSingleton<AnalystAgent>();
+                services.AddSingleton<ArchitectAgent>();
+                services.AddSingleton<DeveloperAgent>();
             });
     await host.RunConsoleAsync();
 }
