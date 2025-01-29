@@ -33,11 +33,10 @@ internal class ConsultantAgent
     ///     Reads user input and writes agent output.
     /// </summary>
     /// <param name="cancellationToken"></param>
-    /// <returns>true if stopping condition was met, false otherwise</returns>
-    public async Task<bool> ExecuteAsync(CancellationToken cancellationToken)
+    public async Task ExecuteAsync(CancellationToken cancellationToken)
     {
         string? userInput = await _userInteraction.ReadUserMessageAsync(cancellationToken);
-        if (string.IsNullOrEmpty(userInput)) return true;
+        if (string.IsNullOrEmpty(userInput)) return;
 
         // Add user input
         _history.AddUserMessage(userInput);
@@ -57,7 +56,6 @@ internal class ConsultantAgent
 
         // Add the message from the agent to the chat history
         _history.AddMessage(result.Role, result.Content ?? string.Empty);
-        return false;
     }
 
     private void Initialize()
