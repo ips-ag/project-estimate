@@ -4,6 +4,8 @@ using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
 using ProjectEstimate.Agents.Analyst;
+using ProjectEstimate.Agents.Architect;
+using ProjectEstimate.Agents.Developer;
 using ProjectEstimate.Configuration;
 using Serilog;
 
@@ -14,6 +16,8 @@ internal class ConsultantAgent
     private readonly IUserInteraction _userInteraction;
     private readonly IOptionsMonitor<AzureOpenAiSettings> _options;
     private readonly AnalystAgent _analystAgent;
+    private readonly ArchitectAgent _architectAgent;
+    private readonly DeveloperAgent _developerAgent;
     private Kernel _kernel = null!;
     private IChatCompletionService _chatCompletionService = null!;
     private ChatHistory _history = null!;
@@ -22,11 +26,15 @@ internal class ConsultantAgent
     public ConsultantAgent(
         IUserInteraction userInteraction,
         IOptionsMonitor<AzureOpenAiSettings> options,
-        AnalystAgent analystAgent)
+        AnalystAgent analystAgent,
+        ArchitectAgent architectAgent,
+        DeveloperAgent developerAgent)
     {
         _userInteraction = userInteraction;
         _options = options;
         _analystAgent = analystAgent;
+        _architectAgent = architectAgent;
+        _developerAgent = developerAgent;
         Initialize();
     }
 
@@ -53,7 +61,7 @@ internal class ConsultantAgent
         var verifications = await _analystAgent.VerifyRequirementsAsync(_history, cancellationToken);
         if (verifications.Count > 0)
         {
-            var verificationWorksheet = workbook.Worksheets.Add("Verification");
+            var verificationWorksheet = workbook.Worksheets.Add("Requirement verification");
             verificationWorksheet.FirstRow().Style.Font.Bold = true;
             verificationWorksheet.Cell("A1").Value = "Question";
             verificationWorksheet.Cell("B1").Value = "Answer";
@@ -66,19 +74,76 @@ internal class ConsultantAgent
             }
             verificationWorksheet.Columns().AdjustToContents();
         }
-
-        // Get the response from the AI
-        var result = await _chatCompletionService.GetChatMessageContentAsync(
-            _history,
-            executionSettings: _openAiPromptExecutionSettings,
-            kernel: _kernel,
-            cancellationToken: cancellationToken);
-
-        // Print the results
-        await _userInteraction.WriteAssistantMessageAsync(result.ToString(), cancellationToken);
-
-        // Add the message from the agent to the chat history
-        _history.AddMessage(result.Role, result.Content ?? string.Empty);
+        
+        var initialEstimates = await _architectAgent.EstimateAsync(_history, cancellationToken);
+        if (initialEstimates is not null && initialEstimates.UserStories.Count > 0)
+        {
+            var initialEstimatesWorksheet = workbook.Worksheets.Add("Initial estimates");
+            initialEstimatesWorksheet.FirstRow().Style.Font.Bold = true;
+            initialEstimatesWorksheet.Cell("A1").Value = "User Story";
+            initialEstimatesWorksheet.Cell("B1").Value = "Task";
+            initialEstimatesWorksheet.Cell("C1").Value = "Optimistic";
+            initialEstimatesWorksheet.Cell("D1").Value = "Realistic";
+            initialEstimatesWorksheet.Cell("E1").Value = "Pessimistic";
+            initialEstimatesWorksheet.Cell("F1").Value = "Effort";
+            var row = 2;
+            foreach (var userStory in initialEstimates.UserStories)
+            {
+                if (userStory.Tasks.Count == 0) continue; // what to do with user story without tasks?
+                foreach (var task in userStory.Tasks)
+                {
+                    initialEstimatesWorksheet.Cell($"A{row}").Value = userStory.Name;
+                    initialEstimatesWorksheet.Cell($"B{row}").Value = task.Name;
+                    initialEstimatesWorksheet.Cell($"C{row}").Value = task.Optimistic;
+                    initialEstimatesWorksheet.Cell($"D{row}").Value = task.Realistic;
+                    initialEstimatesWorksheet.Cell($"E{row}").Value = task.Pessimistic;
+                    initialEstimatesWorksheet.Cell($"F{row}").FormulaA1 = $"=(C{row}+4*D{row}+E{row})/6";
+                    row++;
+                }
+            }
+            row++;
+            initialEstimatesWorksheet.Cell($"A{row}").Value = "Total effort";
+            initialEstimatesWorksheet.Cell($"F{row}").FormulaA1 = $"=SUM(F2:F{row - 1})";
+            initialEstimatesWorksheet.Row(row).Style.Font.Bold = true;
+            initialEstimatesWorksheet.Columns().AdjustToContents();
+        }
+        
+        var estimates = await _developerAgent.ValidateEstimatesAsync(_history, cancellationToken);
+        if (estimates is not null && estimates.UserStories.Count > 0)
+        {
+            var estimatesWorksheet = workbook.Worksheets.Add("Estimates");
+            estimatesWorksheet.FirstRow().Style.Font.Bold = true;
+            estimatesWorksheet.Cell("A1").Value = "User Story";
+            estimatesWorksheet.Cell("B1").Value = "Task";
+            estimatesWorksheet.Cell("C1").Value = "Optimistic";
+            estimatesWorksheet.Cell("D1").Value = "Realistic";
+            estimatesWorksheet.Cell("E1").Value = "Pessimistic";
+            estimatesWorksheet.Cell("F1").Value = "Effort";
+            estimatesWorksheet.Cell("G1").Value = "Correction Reason";
+            var row = 2;
+            foreach (var userStory in estimates.UserStories)
+            {
+                if (userStory.Tasks.Count == 0) continue; // what to do with user story without tasks?
+                foreach (var task in userStory.Tasks)
+                {
+                    estimatesWorksheet.Cell($"A{row}").Value = userStory.Name;
+                    estimatesWorksheet.Cell($"B{row}").Value = task.Name;
+                    estimatesWorksheet.Cell($"C{row}").Value = task.Optimistic;
+                    estimatesWorksheet.Cell($"D{row}").Value = task.Realistic;
+                    estimatesWorksheet.Cell($"E{row}").Value = task.Pessimistic;
+                    estimatesWorksheet.Cell($"F{row}").FormulaA1 = $"=(C{row}+4*D{row}+E{row})/6";
+                    estimatesWorksheet.Cell($"G{row}").Value = task.CorrectionReason;
+                    row++;
+                }
+            }
+            row++;
+            estimatesWorksheet.Cell($"A{row}").Value = "Total effort";
+            estimatesWorksheet.Cell($"F{row}").FormulaA1 = $"=SUM(F2:F{row - 1})";
+            estimatesWorksheet.Row(row).Style.Font.Bold = true;
+            estimatesWorksheet.Columns().AdjustToContents();
+        }
+        
+        await _userInteraction.WriteAssistantMessageAsync("Estimation complete", cancellationToken);
 
         workbook.SaveAs("estimates.xlsx", new SaveOptions { EvaluateFormulasBeforeSaving = true });
     }
