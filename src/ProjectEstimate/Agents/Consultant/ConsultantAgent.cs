@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Options;
+﻿using ClosedXML.Excel;
+using Microsoft.Extensions.Options;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
@@ -38,11 +39,33 @@ internal class ConsultantAgent
         string? userInput = await _userInteraction.ReadUserMessageAsync(cancellationToken);
         if (string.IsNullOrEmpty(userInput)) return;
 
+        using var workbook = new XLWorkbook();
+        var inputWorksheet = workbook.Worksheets.Add("Input");
+        inputWorksheet.FirstRow().Style.Font.Bold = true;
+        inputWorksheet.Cell("A1").Value = "User Input";
+        inputWorksheet.Cell("A2").Value = userInput;
+        inputWorksheet.Columns().AdjustToContents();
+
         // Add user input
         _history.AddUserMessage(userInput);
 
         // consult analyst
-        await _analystAgent.VerifyRequirementsAsync(_history, cancellationToken);
+        var verifications = await _analystAgent.VerifyRequirementsAsync(_history, cancellationToken);
+        if (verifications.Count > 0)
+        {
+            var verificationWorksheet = workbook.Worksheets.Add("Verification");
+            verificationWorksheet.FirstRow().Style.Font.Bold = true;
+            verificationWorksheet.Cell("A1").Value = "Question";
+            verificationWorksheet.Cell("B1").Value = "Answer";
+            var row = 2;
+            foreach (var verification in verifications)
+            {
+                verificationWorksheet.Cell($"A{row}").Value = verification.Question;
+                verificationWorksheet.Cell($"B{row}").Value = verification.Answer;
+                row++;
+            }
+            verificationWorksheet.Columns().AdjustToContents();
+        }
 
         // Get the response from the AI
         var result = await _chatCompletionService.GetChatMessageContentAsync(
@@ -56,6 +79,8 @@ internal class ConsultantAgent
 
         // Add the message from the agent to the chat history
         _history.AddMessage(result.Role, result.Content ?? string.Empty);
+
+        workbook.SaveAs("estimates.xlsx", new SaveOptions { EvaluateFormulasBeforeSaving = true });
     }
 
     private void Initialize()

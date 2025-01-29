@@ -2,6 +2,7 @@
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
+using ProjectEstimate.Agents.Analyst.Models;
 using ProjectEstimate.Configuration;
 using Serilog;
 
@@ -22,10 +23,11 @@ internal class AnalystAgent
         Initialize();
     }
 
-    public async ValueTask VerifyRequirementsAsync(
+    public async ValueTask<List<RequirementVerificationModel>> VerifyRequirementsAsync(
         ChatHistory history,
         CancellationToken cancel)
     {
+        List<RequirementVerificationModel> verifications = [];
         do
         {
             var result = await _chatCompletionService.GetChatMessageContentAsync(
@@ -40,7 +42,9 @@ internal class AnalystAgent
             string? userInput = await _userInteraction.ReadUserMessageAsync(cancel);
             if (userInput is null) break;
             history.AddUserMessage(userInput);
+            verifications.Add(new RequirementVerificationModel(result.Content, userInput));
         } while (true);
+        return verifications;
     }
 
     private void Initialize()
@@ -69,7 +73,7 @@ internal class AnalystAgent
                 """
                 Assistant is a business analysts. It verifies project requirements.
                 Input consists of all gathered requirements for a software project. They can be functional or non-functional requirements.
-                Ask questions to clarify the requirements. Maximum 2 questions can be asked. Ask questions one by one.
+                Ask questions to clarify the requirements. Maximum 2 questions can be asked. Ask questions one by one. Do not number the questions.
                 When requirements are complete, respond with 'Requirement analysis complete'.
                 Provide explanation of each question in the output. Explanation should be put in brackets and follow the question.
                 Do not answer requests that are not related to project requirements analysis.
