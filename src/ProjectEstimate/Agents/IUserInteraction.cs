@@ -3,5 +3,6 @@
 public interface IUserInteraction
 {
     ValueTask<string?> ReadUserMessageAsync(CancellationToken cancel);
+    ValueTask<string?> ReadMultilineUserMessageAsync(CancellationToken cancel);
     ValueTask WriteAssistantMessageAsync(string message, CancellationToken cancel);
 }

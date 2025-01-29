@@ -44,7 +44,7 @@ internal class ConsultantAgent
     /// <param name="cancellationToken"></param>
     public async Task ExecuteAsync(CancellationToken cancellationToken)
     {
-        string? userInput = await _userInteraction.ReadUserMessageAsync(cancellationToken);
+        string? userInput = await _userInteraction.ReadMultilineUserMessageAsync(cancellationToken);
         if (string.IsNullOrEmpty(userInput)) return;
 
         using var workbook = new XLWorkbook();

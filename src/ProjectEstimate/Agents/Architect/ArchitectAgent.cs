@@ -12,13 +12,15 @@ namespace ProjectEstimate.Agents.Architect;
 internal class ArchitectAgent
 {
     private readonly IOptionsMonitor<AzureOpenAiSettings> _options;
+    private readonly IUserInteraction _userInteraction;
     private Kernel _kernel = null!;
     private IChatCompletionService _chatCompletionService = null!;
     private OpenAIPromptExecutionSettings _openAiPromptExecutionSettings = null!;
 
-    public ArchitectAgent(IOptionsMonitor<AzureOpenAiSettings> options)
+    public ArchitectAgent(IOptionsMonitor<AzureOpenAiSettings> options, IUserInteraction userInteraction)
     {
         _options = options;
+        _userInteraction = userInteraction;
         Initialize();
     }
 
@@ -31,7 +33,15 @@ internal class ArchitectAgent
             cancellationToken: cancel);
         if (result.Content is null) return null;
         history.AddAssistantMessage(result.Content);
-        return JsonSerializer.Deserialize<EstimationModel>(result.Content);
+        try
+        {
+            return JsonSerializer.Deserialize<EstimationModel>(result.Content);
+        }
+        catch (JsonException)
+        {
+            await _userInteraction.WriteAssistantMessageAsync(result.Content, cancel);
+            return null;
+        }
     }
 
     private void Initialize()
