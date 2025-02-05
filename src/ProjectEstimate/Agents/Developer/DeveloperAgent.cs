@@ -11,6 +11,7 @@ namespace ProjectEstimate.Agents.Developer;
 
 internal class DeveloperAgent
 {
+    private const string RoleName = "Developer";
     private readonly IOptionsMonitor<AzureOpenAiSettings> _options;
     private readonly IUserInteraction _userInteraction;
     private Kernel _kernel = null!;
@@ -31,6 +32,7 @@ internal class DeveloperAgent
             executionSettings: _openAiPromptExecutionSettings,
             kernel: _kernel,
             cancellationToken: cancel);
+        await _userInteraction.WriteAssistantMessageAsync(RoleName, "Estimation validation complete", cancel);
         if (result.Content is null) return null;
         history.AddAssistantMessage(result.Content);
         try
@@ -43,7 +45,7 @@ internal class DeveloperAgent
         }
         catch (JsonException)
         {
-            await _userInteraction.WriteAssistantMessageAsync(result.Content, cancel);
+            await _userInteraction.WriteAssistantMessageAsync(RoleName, result.Content, cancel);
             return null;
         }
     }

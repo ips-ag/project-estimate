@@ -10,6 +10,7 @@ namespace ProjectEstimate.Agents.Analyst;
 
 internal class AnalystAgent
 {
+    private const string RoleName = "Analyst";
     private readonly IOptionsMonitor<AzureOpenAiSettings> _options;
     private readonly IUserInteraction _userInteraction;
     private Kernel _kernel = null!;
@@ -37,7 +38,7 @@ internal class AnalystAgent
                 cancellationToken: cancel);
             if (result.Content is null) break;
             history.AddAssistantMessage(result.Content);
-            await _userInteraction.WriteAssistantMessageAsync(result.Content, cancel);
+            await _userInteraction.WriteAssistantMessageAsync(RoleName, result.Content, cancel);
             if (result.Content.Contains("Requirement analysis complete")) break;
             string? userInput = await _userInteraction.ReadUserMessageAsync(cancel);
             if (userInput is null) break;
