@@ -23,9 +23,9 @@ internal class ConsoleInteraction : IUserInteraction
         return stringBuilder.Length == 0 ? null : stringBuilder.ToString();
     }
 
-    public ValueTask WriteAssistantMessageAsync(string message, CancellationToken cancel)
+    public ValueTask WriteAssistantMessageAsync(string role, string message, CancellationToken cancel)
     {
-        Console.WriteLine($"Assistant > {message}");
+        Console.WriteLine($"{role} > {message}");
         return ValueTask.CompletedTask;
     }
 }

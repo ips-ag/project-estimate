@@ -13,6 +13,7 @@ namespace ProjectEstimate.Agents.Consultant;
 
 internal class ConsultantAgent
 {
+    private const string RoleName = "Consultant";
     private readonly IUserInteraction _userInteraction;
     private readonly IOptionsMonitor<AzureOpenAiSettings> _options;
     private readonly AnalystAgent _analystAgent;
@@ -143,7 +144,7 @@ internal class ConsultantAgent
             estimatesWorksheet.Columns().AdjustToContents();
         }
 
-        await _userInteraction.WriteAssistantMessageAsync("Estimation complete", cancellationToken);
+        await _userInteraction.WriteAssistantMessageAsync(RoleName, "Estimation complete", cancellationToken);
 
         workbook.SaveAs("estimates.xlsx", new SaveOptions { EvaluateFormulasBeforeSaving = true });
     }
