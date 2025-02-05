@@ -74,7 +74,7 @@ internal class ConsultantAgent
             }
             verificationWorksheet.Columns().AdjustToContents();
         }
-        
+
         var initialEstimates = await _architectAgent.EstimateAsync(_history, cancellationToken);
         if (initialEstimates is not null && initialEstimates.UserStories.Count > 0)
         {
@@ -107,7 +107,7 @@ internal class ConsultantAgent
             initialEstimatesWorksheet.Row(row).Style.Font.Bold = true;
             initialEstimatesWorksheet.Columns().AdjustToContents();
         }
-        
+
         var estimates = await _developerAgent.ValidateEstimatesAsync(_history, cancellationToken);
         if (estimates is not null && estimates.UserStories.Count > 0)
         {
@@ -142,7 +142,7 @@ internal class ConsultantAgent
             estimatesWorksheet.Row(row).Style.Font.Bold = true;
             estimatesWorksheet.Columns().AdjustToContents();
         }
-        
+
         await _userInteraction.WriteAssistantMessageAsync("Estimation complete", cancellationToken);
 
         workbook.SaveAs("estimates.xlsx", new SaveOptions { EvaluateFormulasBeforeSaving = true });

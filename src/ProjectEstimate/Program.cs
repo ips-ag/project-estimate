@@ -13,7 +13,7 @@ using Serilog;
 using Serilog.Exceptions;
 
 Log.Logger = new LoggerConfiguration()
-    .MinimumLevel.Information()
+    .MinimumLevel.Warning()
     .WriteTo.Console()
     .Enrich.FromLogContext()
     .Enrich.WithExceptionDetails()

@@ -35,7 +35,11 @@ internal class ArchitectAgent
         history.AddAssistantMessage(result.Content);
         try
         {
-            return JsonSerializer.Deserialize<EstimationModel>(result.Content);
+            int start = result.Content.IndexOf('{');
+            int end = result.Content.LastIndexOf('}');
+            if (start == -1 || end == -1) return null;
+            string json = result.Content.Substring(start, end - start + 1);
+            return JsonSerializer.Deserialize<EstimationModel>(json);
         }
         catch (JsonException)
         {
