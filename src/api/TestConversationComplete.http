@@ -1,0 +1,7 @@
+POST http://localhost:7071/api/conversation
+Content-Type: application/json
+
+{
+  "input": "project requirements: create .NET console application that will take users input and then output it twice"
+}
+
