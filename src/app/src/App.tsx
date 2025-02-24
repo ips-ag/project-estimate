@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import sendIcon from "./assets/send.svg";
+import logo from "./assets/logo.png";
 
 type Message = {
   sender: "user" | "assistant";
@@ -22,11 +24,9 @@ export default function App() {
     e.preventDefault();
     if (!userInput.trim()) return;
 
-    // Add user message
     const newMessages: Message[] = [...messages, { sender: "user", text: userInput }];
     setMessages(newMessages);
 
-    // POST request
     try {
       const response = await fetch("http://localhost:7071/api/conversation", {
         method: "POST",
@@ -35,7 +35,6 @@ export default function App() {
       });
       const data: ConversationResponse = await response.json();
       if (!!data.output) {
-        // Add assistant message
         setMessages([...newMessages, { sender: "assistant", text: data.output }]);
       }
     } catch {
@@ -46,17 +45,93 @@ export default function App() {
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
-      <div style={{ flexGrow: 1, overflowY: "auto", padding: "1rem" }}>
+    <div
+      style={{
+        position: "relative",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        width: "100vw",
+        height: "100vh",
+        backgroundColor: "#e0f3ff",
+      }}
+    >
+      <img
+        src={logo}
+        alt="logo"
+        style={{
+          position: "absolute",
+          top: "10px",
+          left: "10px",
+          zIndex: 10,
+          height: "70px",
+          width: "auto",
+        }}
+      />
+      <div
+        style={{
+          marginTop: "1rem",
+          width: "60%",
+          flexGrow: 1,
+          overflowY: "auto",
+          padding: "1rem",
+          backgroundColor: "#fff",
+          borderRadius: "12px",
+          boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
         {messages.map((msg, i) => (
           <div key={i} style={{ margin: "0.5rem 0" }}>
             <strong>{msg.sender}:</strong> {msg.text}
           </div>
         ))}
       </div>
-      <form onSubmit={handleSubmit} style={{ display: "flex", margin: "1rem" }}>
-        <input style={{ flexGrow: 1 }} type="text" value={userInput} onChange={(e) => setUserInput(e.target.value)}/>
-        <button type="submit">Send</button>
+      <form
+        onSubmit={handleSubmit}
+        style={{
+          position: "relative",
+          width: "70%",
+          margin: "1rem",
+          borderRadius: "12px",
+        }}
+      >
+        <input
+          style={{
+            width: "100%",
+            height: "3rem",
+            borderRadius: "12px",
+            fontSize: "1.4rem",
+            paddingLeft: "0.75rem",
+          }}
+          type="text"
+          value={userInput}
+          onChange={(e) => setUserInput(e.target.value)}
+        />
+        <button
+          style={{
+            position: "absolute",
+            right: "0",
+            top: "50%",
+            transform: "translateY(-50%)",
+            borderRadius: "50%",
+            width: "2rem",
+            height: "2rem",
+            padding: 0,
+            transition: "none",
+          }}
+          type="submit"
+        >
+          <img
+            src={sendIcon}
+            alt="send"
+            style={{
+              width: "100%",
+              height: "100%",
+            }}
+          />
+        </button>
       </form>
     </div>
   );
