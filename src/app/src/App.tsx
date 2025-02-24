@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import sendIcon from "./assets/send.svg";
 import logo from "./assets/logo.png";
+import { config } from "./config/config.ts";
 
 type Message = {
   sender: "user" | "assistant";
@@ -28,7 +29,7 @@ export default function App() {
     setMessages(newMessages);
 
     try {
-      const response = await fetch("http://localhost:7071/api/conversation", {
+      const response = await fetch(config.apiUrl + "/conversation", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ input: userInput } as ConversationRequest),
