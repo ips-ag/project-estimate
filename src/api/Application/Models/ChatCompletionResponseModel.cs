@@ -6,4 +6,7 @@ public class ChatCompletionResponseModel
 {
     [JsonPropertyName("output")]
     public string? Output { get; set; }
+
+    [JsonPropertyName("responseRequired")]
+    public bool ResponseRequired { get; set; } = false;
 }

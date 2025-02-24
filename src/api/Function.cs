@@ -18,9 +18,18 @@ public class Function
         _logger = logger;
         _agent = agent;
     }
+    
+    [Function("UploadFile")]
+    public Task<IActionResult> UploadFile(
+        [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "upload")]
+        HttpRequest req,
+        CancellationToken cancel)
+    {
+        throw new NotImplementedException();
+    }
 
     [Function("CompleteConversation")]
-    public async Task<IActionResult> Complete(
+    public async Task<IActionResult> CompleteConversation(
         [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "conversation")]
         HttpRequest req,
         [FromBody] ChatCompletionRequestModel requestModel,
