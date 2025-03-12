@@ -6,7 +6,10 @@ using Microsoft.Extensions.Options;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.AzureOpenAI;
-using ProjectEstimate.Repositories.Agents;
+using ProjectEstimate.Repositories.Agents.Analyst;
+using ProjectEstimate.Repositories.Agents.Architect;
+using ProjectEstimate.Repositories.Agents.Consultant;
+using ProjectEstimate.Repositories.Agents.Developer;
 using ProjectEstimate.Repositories.Configuration;
 
 var host = new HostBuilder()
@@ -34,10 +37,14 @@ var host = new HostBuilder()
                         options.Endpoint,
                         options.ApiKey);
                 });
-            services.AddKeyedTransient<Kernel>(
-                "TestAgentKernel",
-                (sp, key) => new Kernel(sp));
-            services.AddScoped<TestAgent>();
+            services.AddKeyedTransient<Kernel>("ConsultantAgent", (sp, _) => new Kernel(sp));
+            services.AddScoped<ConsultantAgent>();
+            services.AddKeyedTransient<Kernel>("AnalystAgent", (sp, _) => new Kernel(sp));
+            services.AddScoped<AnalystAgent>();
+            services.AddKeyedTransient<Kernel>("ArchitectAgent", (sp, _) => new Kernel(sp));
+            services.AddScoped<ArchitectAgent>();
+            services.AddKeyedTransient<Kernel>("DeveloperAgent", (sp, _) => new Kernel(sp));
+            services.AddScoped<DeveloperAgent>();
         })
     .Build();
 
