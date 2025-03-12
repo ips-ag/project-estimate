@@ -1,24 +1,21 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
-using Microsoft.Extensions.Logging;
 using ProjectEstimate.Application.Models;
-using ProjectEstimate.Repositories.Agents;
+using ProjectEstimate.Repositories.Agents.Consultant;
 using FromBodyAttribute = Microsoft.Azure.Functions.Worker.Http.FromBodyAttribute;
 
 namespace ProjectEstimate;
 
-public class Function
+internal class Function
 {
-    private readonly ILogger<Function> _logger;
-    private readonly TestAgent _agent;
+    private readonly ConsultantAgent _agent;
 
-    public Function(ILogger<Function> logger, TestAgent agent)
+    public Function(ConsultantAgent agent)
     {
-        _logger = logger;
         _agent = agent;
     }
-    
+
     [Function("UploadFile")]
     public Task<IActionResult> UploadFile(
         [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "upload")]
@@ -35,7 +32,7 @@ public class Function
         [FromBody] ChatCompletionRequestModel requestModel,
         CancellationToken cancel)
     {
-        string? response = await _agent.CompleteAsync(requestModel.Input, cancel);
+        string? response = await _agent.ExecuteAsync(requestModel.Input, cancel);
         return new OkObjectResult(new ChatCompletionResponseModel { Output = response });
     }
 }
