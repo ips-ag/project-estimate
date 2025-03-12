@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from 'remark-gfm'
 import sendIcon from "./assets/send.svg";
 import logo from "./assets/logo.png";
 import { config } from "./config/config.ts";
@@ -85,7 +87,7 @@ export default function App() {
       >
         {messages.map((msg, i) => (
           <div key={i} style={{ margin: "0.5rem 0" }}>
-            <strong>{msg.sender}:</strong> {msg.text}
+            <strong>{msg.sender}:</strong> <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.text}</ReactMarkdown>
           </div>
         ))}
       </div>
