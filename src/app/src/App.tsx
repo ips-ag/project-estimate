@@ -2,8 +2,10 @@ import React, { useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from 'remark-gfm'
 import sendIcon from "./assets/send.svg";
+import spinnerIcon from "./assets/spinner.svg";
 import logo from "./assets/logo.png";
 import { config } from "./config/config.ts";
+import './App.css';
 
 type Message = {
   sender: "user" | "assistant";
@@ -22,6 +24,7 @@ type ConversationResponse = {
 export default function App() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [userInput, setUserInput] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -31,10 +34,13 @@ export default function App() {
     setMessages(newMessages);
 
     try {
+      const request: ConversationRequest = { input: userInput };
+      setIsLoading(true);
+      setUserInput("");
       const response = await fetch(config.apiUrl + "/conversation", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ input: userInput } as ConversationRequest),
+        body: JSON.stringify(request),
       });
       const data: ConversationResponse = await response.json();
       if (!!data.output) {
@@ -42,9 +48,9 @@ export default function App() {
       }
     } catch {
       // Handle error if needed
+    } finally {
+      setIsLoading(false);
     }
-
-    setUserInput("");
   }
 
   return (
@@ -101,6 +107,8 @@ export default function App() {
         }}
       >
         <textarea
+          id="userInput"
+          disabled={isLoading}
           style={{
             width: "100%",
             height: "6rem",
@@ -108,11 +116,13 @@ export default function App() {
             fontSize: "1.4rem",
             paddingLeft: "0.75rem",
             paddingTop: "0.5rem",
+            resize: "none",
           }}
           value={userInput}
           onChange={(e) => setUserInput(e.target.value)}
         />
         <button
+          id="submitButton"
           style={{
             position: "absolute",
             right: "0",
@@ -126,14 +136,20 @@ export default function App() {
           }}
           type="submit"
         >
-          <img
-            src={sendIcon}
-            alt="send"
-            style={{
-              width: "100%",
-              height: "100%",
-            }}
-          />
+          {isLoading ? (
+            <img
+              src={spinnerIcon}
+              alt="Loading..."
+              style={{ width: "100%", height: "100%" }}
+              className="spinner"
+            />
+          ) : (
+            <img
+              src={sendIcon}
+              alt="Send"
+              style={{ width: "100%", height: "100%" }}
+            />
+          )}
         </button>
       </form>
     </div>
