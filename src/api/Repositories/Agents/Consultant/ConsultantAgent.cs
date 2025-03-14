@@ -170,7 +170,7 @@ internal class ConsultantAgent
                             task.Optimistic,
                             task.Realistic,
                             task.Pessimistic,
-                            (task.Optimistic + 4 * task.Realistic + task.Pessimistic) / 6,
+                            $"{(task.Optimistic + 4 * task.Realistic + task.Pessimistic) / 6:0.####}",
                             task.CorrectionReason) +
                         "|");
                     row++;
@@ -192,10 +192,10 @@ internal class ConsultantAgent
                     "",
                     "",
                     "__" +
-                    estimates.UserStories.Sum(
+                    $"{estimates.UserStories.Sum(
                         userStory => userStory.Tasks.Sum(
-                            task => (task.Optimistic + 4 * task.Realistic + task.Pessimistic) / 6))) +
-                "__|  \n");
+                            task => (task.Optimistic + 4 * task.Realistic + task.Pessimistic) / 6)):0.####}" +
+                    "__|  \n"));
         }
 
         // await _userInteraction.WriteAssistantMessageAsync(RoleName, "Estimation complete", cancellationToken);
