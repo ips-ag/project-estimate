@@ -100,15 +100,15 @@ export default function App() {
           borderRadius: "12px",
         }}
       >
-        <input
+        <textarea
           style={{
             width: "100%",
-            height: "3rem",
+            height: "6rem",
             borderRadius: "12px",
             fontSize: "1.4rem",
             paddingLeft: "0.75rem",
+            paddingTop: "0.5rem",
           }}
-          type="text"
           value={userInput}
           onChange={(e) => setUserInput(e.target.value)}
         />
