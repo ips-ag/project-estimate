@@ -6,6 +6,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.AzureOpenAI;
+using ProjectEstimate;
 using ProjectEstimate.Repositories.Agents.Analyst;
 using ProjectEstimate.Repositories.Agents.Architect;
 using ProjectEstimate.Repositories.Agents.Consultant;
@@ -23,6 +24,8 @@ var host = new HostBuilder()
         {
             services.AddApplicationInsightsTelemetryWorkerService();
             services.ConfigureFunctionsApplicationInsights();
+
+            services.AddServerlessHub<Functions>();
 
             services.AddOptions<AzureOpenAiSettings>()
                 .BindConfiguration(AzureOpenAiSettings.SectionName)
