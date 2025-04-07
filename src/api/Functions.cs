@@ -8,7 +8,7 @@ using Microsoft.Extensions.Logging;
 
 namespace ProjectEstimate;
 
-[SignalRConnection("Azure__SignalR__ConnectionString")]
+[SignalRConnection]
 public class Functions : ServerlessHub<IChatClient>
 {
     private const string HubName = nameof(Functions);
