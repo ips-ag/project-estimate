@@ -4,13 +4,6 @@ on:
   push:
     branches:
       - main
-      - feature/app-service
-    paths:
-      - infra/**
-      - .github/workflows/infra.yml
-  pull_request:
-    branches:
-      - main
     paths:
       - infra/**
       - .github/workflows/infra.yml
