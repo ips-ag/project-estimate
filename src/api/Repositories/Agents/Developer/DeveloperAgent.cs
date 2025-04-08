@@ -1,10 +1,10 @@
 ﻿using System.Text.Json;
 using Microsoft.Extensions.AI;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.AzureOpenAI;
 using ProjectEstimate.Repositories.Agents.Developer.Models;
+
 #pragma warning disable SKEXP0010
 
 namespace ProjectEstimate.Repositories.Agents.Developer;

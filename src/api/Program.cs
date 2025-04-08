@@ -1,51 +1,65 @@
-using Microsoft.Azure.Functions.Worker;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
+using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.Extensions.Options;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.AzureOpenAI;
+using ProjectEstimate.Extensions.ApplicationInsights;
 using ProjectEstimate.Repositories.Agents.Analyst;
 using ProjectEstimate.Repositories.Agents.Architect;
 using ProjectEstimate.Repositories.Agents.Consultant;
 using ProjectEstimate.Repositories.Agents.Developer;
 using ProjectEstimate.Repositories.Configuration;
+using Serilog;
 
-var host = new HostBuilder()
-    .ConfigureFunctionsWebApplication()
-    .ConfigureAppConfiguration(
-        builder => builder
-            .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-            .AddJsonFile("secrets.json", optional: true, reloadOnChange: true))
-    .ConfigureServices(
-        services =>
+Log.Logger = new LoggerConfiguration()
+    .WriteTo.Console()
+    .CreateBootstrapLogger();
+try
+{
+    var builder = WebApplication.CreateBuilder(args);
+    builder.Configuration.AddJsonFile("secrets.json", optional: true, reloadOnChange: true);
+    builder.Host.UseSerilog();
+    builder.Services.AddControllers();
+    builder.Services.AddCors();
+    builder.Services.AddOpenApi();
+    builder.Services.AddApplicationInsightsTelemetry();
+    builder.Services.AddSingleton<ITelemetryInitializer, ExceptionSamplingRateTelemetryInitializer>();
+    builder.Services.AddOptions<AzureOpenAiSettings>()
+        .BindConfiguration(AzureOpenAiSettings.SectionName)
+        .ValidateDataAnnotations()
+        .ValidateOnStart();
+    builder.Services.AddSingleton<IChatCompletionService>(
+        sp =>
         {
-            services.AddApplicationInsightsTelemetryWorkerService();
-            services.ConfigureFunctionsApplicationInsights();
+            var options = sp.GetRequiredService<IOptions<AzureOpenAiSettings>>().Value;
+            return new AzureOpenAIChatCompletionService(
+                options.DeploymentName,
+                options.Endpoint,
+                options.ApiKey);
+        });
+    builder.Services.AddKeyedTransient<Kernel>("ConsultantAgent", (sp, _) => new Kernel(sp));
+    builder.Services.AddScoped<ConsultantAgent>();
+    builder.Services.AddKeyedTransient<Kernel>("AnalystAgent", (sp, _) => new Kernel(sp));
+    builder.Services.AddScoped<AnalystAgent>();
+    builder.Services.AddKeyedTransient<Kernel>("ArchitectAgent", (sp, _) => new Kernel(sp));
+    builder.Services.AddScoped<ArchitectAgent>();
+    builder.Services.AddKeyedTransient<Kernel>("DeveloperAgent", (sp, _) => new Kernel(sp));
+    builder.Services.AddScoped<DeveloperAgent>();
 
-            services.AddOptions<AzureOpenAiSettings>()
-                .BindConfiguration(AzureOpenAiSettings.SectionName)
-                .ValidateDataAnnotations()
-                .ValidateOnStart();
-            services.AddSingleton<IChatCompletionService>(
-                sp =>
-                {
-                    var options = sp.GetRequiredService<IOptions<AzureOpenAiSettings>>().Value;
-                    return new AzureOpenAIChatCompletionService(
-                        options.DeploymentName,
-                        options.Endpoint,
-                        options.ApiKey);
-                });
-            services.AddKeyedTransient<Kernel>("ConsultantAgent", (sp, _) => new Kernel(sp));
-            services.AddScoped<ConsultantAgent>();
-            services.AddKeyedTransient<Kernel>("AnalystAgent", (sp, _) => new Kernel(sp));
-            services.AddScoped<AnalystAgent>();
-            services.AddKeyedTransient<Kernel>("ArchitectAgent", (sp, _) => new Kernel(sp));
-            services.AddScoped<ArchitectAgent>();
-            services.AddKeyedTransient<Kernel>("DeveloperAgent", (sp, _) => new Kernel(sp));
-            services.AddScoped<DeveloperAgent>();
-        })
-    .Build();
-
-host.Run();
+    var app = builder.Build();
+    if (app.Environment.IsDevelopment())
+    {
+        app.MapOpenApi();
+    }
+    app.UseCors(cors => cors.AllowAnyMethod().AllowAnyHeader().AllowAnyOrigin());
+    app.MapControllers();
+    await app.RunAsync();
+}
+catch (Exception ex)
+{
+    Log.Fatal(ex, "Application terminated unexpectedly");
+}
+finally
+{
+    Log.CloseAndFlush();
+}
