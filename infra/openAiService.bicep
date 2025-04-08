@@ -66,3 +66,7 @@ resource openAIService 'Microsoft.CognitiveServices/accounts@2024-10-01' = {
     }
   }
 }
+
+output endpoint string = 'https://${openAIService.name}.openai.azure.com/'
+#disable-next-line outputs-should-not-contain-secrets
+output apiKey string = openAIService.listKeys().key1

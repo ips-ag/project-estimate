@@ -4,14 +4,12 @@ on:
   push:
     branches:
       - main
-      - feature/app-service
     paths:
       - src/api/**
       - .github/workflows/api.yml
   pull_request:
     branches:
       - main
-      - feature/app-service
     paths:
       - src/api/**
       - .github/workflows/api.yml
@@ -19,6 +17,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -50,12 +49,14 @@ jobs:
       id-token: write
     runs-on: ubuntu-latest
     environment: Development
+
     steps:
       - name: Download artifact
         uses: actions/download-artifact@v4
         with:
           name: api
           path: api
+
       - name: Azure CLI Login
         uses: azure/login@v2
         with:

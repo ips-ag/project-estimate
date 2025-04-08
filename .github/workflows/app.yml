@@ -4,14 +4,12 @@ on:
   push:
     branches:
       - main
-      - feature/app-service
     paths:
       - src/app/**
       - .github/workflows/app.yml
   pull_request:
     branches:
       - main
-      - feature/app-service
     paths:
       - src/app/**
       - .github/workflows/app.yml

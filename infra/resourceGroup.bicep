@@ -75,6 +75,15 @@ resource appInsights 'Microsoft.Insights/components@2020-02-02' = {
   }
 }
 
+module openAIService 'openAiService.bicep' = {
+  name: openAIServiceName
+  params: {
+    openAIServiceName: openAIServiceName
+    location: location
+    tags: tags
+  }
+}
+
 resource appServicePlan 'Microsoft.Web/serverfarms@2024-04-01' = {
   name: appServicePlanName
   location: location
@@ -111,14 +120,24 @@ resource apiWebApp 'Microsoft.Web/sites@2024-04-01' = {
     httpsOnly: true
   }
   kind: 'app,linux'
-}
 
-module openAIService 'openAiService.bicep' = {
-  name: openAIServiceName
-  params: {
-    openAIServiceName: openAIServiceName
-    location: location
-    tags: tags
+  resource config 'config' = {
+    name: 'web'
+    properties: {
+      alwaysOn: true
+      linuxFxVersion: 'DOTNETCORE|9.0'
+      cors: {
+        allowedOrigins: [
+          'https://${uiWebApp.properties.defaultHostName}'
+        ]
+        supportCredentials: false
+      }
+      appSettings: [
+        { name: 'APPLICATIONINSIGHTS_CONNECTION_STRING', value: appInsights.properties.ConnectionString }
+        { name: 'Azure__OpenAI__Endpoint', value: openAIService.outputs.endpoint }
+        { name: 'Azure__OpenAI__ApiKey', value: openAIService.outputs.apiKey }
+      ]
+    }
   }
 }
 
