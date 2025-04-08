@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - feature/app-service
     paths:
       - src/api/**
       - .github/workflows/api.yml

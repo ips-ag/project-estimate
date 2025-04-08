@@ -1,7 +1,9 @@
+using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.Extensions.Options;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.AzureOpenAI;
+using ProjectEstimate.Extensions.ApplicationInsights;
 using ProjectEstimate.Repositories.Agents.Analyst;
 using ProjectEstimate.Repositories.Agents.Architect;
 using ProjectEstimate.Repositories.Agents.Consultant;
@@ -21,6 +23,7 @@ try
     builder.Services.AddCors();
     builder.Services.AddOpenApi();
     builder.Services.AddApplicationInsightsTelemetry();
+    builder.Services.AddSingleton<ITelemetryInitializer, ExceptionSamplingRateTelemetryInitializer>();
     builder.Services.AddOptions<AzureOpenAiSettings>()
         .BindConfiguration(AzureOpenAiSettings.SectionName)
         .ValidateDataAnnotations()
