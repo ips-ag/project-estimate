@@ -1,7 +1,3 @@
-// create resource group
-// deploy App Service Plan with B1 SKU
-// create 2 App Services in it, one for UI the other for API
-
 targetScope = 'subscription'
 
 @allowed([
