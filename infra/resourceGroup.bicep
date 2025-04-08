@@ -124,7 +124,6 @@ resource apiWebApp 'Microsoft.Web/sites@2024-04-01' = {
   resource config 'config' = {
     name: 'web'
     properties: {
-      alwaysOn: true
       linuxFxVersion: 'DOTNETCORE|9.0'
       cors: {
         allowedOrigins: [
