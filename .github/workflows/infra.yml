@@ -5,10 +5,16 @@ on:
     branches:
       - main
       - feature/app-service
+    paths:
+      - "infra/**"
+      - ".github/workflows/infra.yml"
   pull_request:
     branches:
       - main
       - feature/app-service
+    paths:
+      - "infra/**"
+      - ".github/workflows/infra.yml"
 
 jobs:
   deploy:
