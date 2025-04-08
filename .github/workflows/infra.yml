@@ -34,4 +34,4 @@ jobs:
 
       - name: Deploy Bicep template
         run: |
-          az deployment sub create --name dep-projectestimate-$(environment) --location swedencentral --template-file ./infra/main.bicep --parameters environment=Dev
+          az deployment sub create --name dep-projectestimate-dev --location swedencentral --template-file ./infra/main.bicep --parameters environment=Dev

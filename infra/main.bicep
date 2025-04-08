@@ -8,11 +8,14 @@ targetScope = 'subscription'
 @description('Required. Environment name.')
 param environment string
 
-@description('The name of the resource group to create.')
+@description('Optional. The name of the resource group to create.')
 param rgName string = 'rg-projectestimate-${toLower(environment)}'
 
-@description('The location for all resources.')
+@description('Optional. The location for all resources.')
 param location string = 'swedencentral'
+
+@description('Optional. Resource Group tags.')
+param tags object = {}
 
 var env = toLower(environment)
 var deploymentName = deployment().name
@@ -27,5 +30,6 @@ module rg 'resourceGroup.bicep' = {
   name: '${deploymentName}-resources'
   params: {
     env: env
+    tags: tags
   }
 }
