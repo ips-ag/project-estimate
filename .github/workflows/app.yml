@@ -33,6 +33,7 @@ jobs:
         with:
           node-version: "20.x"
           cache: "yarn"
+          cache-dependency-path: src/app/yarn.lock
 
       - name: Install dependencies
         run: |
