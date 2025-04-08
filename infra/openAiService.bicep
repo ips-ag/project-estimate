@@ -19,7 +19,7 @@ resource openAIService 'Microsoft.CognitiveServices/accounts@2024-10-01' = {
     publicNetworkAccess: 'Enabled'
   }
 
-  resource _ 'defenderForAISettings' = {
+  resource defender 'defenderForAISettings' = {
     name: 'Default'
     properties: {
       state: 'Disabled'
@@ -28,6 +28,9 @@ resource openAIService 'Microsoft.CognitiveServices/accounts@2024-10-01' = {
 
   resource gpt4o 'deployments' = {
     name: 'gpt-4o'
+    dependsOn: [
+      defender
+    ]
     sku: {
       name: 'GlobalStandard'
       capacity: 1
