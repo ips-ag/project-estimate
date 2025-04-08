@@ -9,6 +9,12 @@ param location string = resourceGroup().location
 @description('Optional. Resource tags. Defaults to resource group tags.')
 param tags object = resourceGroup().tags
 
+@description('Optional. Log Analytics workspace resource name.')
+param logAnalyticsName string = 'law-projectestimate-${env}'
+
+@description('Optional. Application Insights resource name.')
+param appInsightsName string = 'ai-projectestimate-${env}'
+
 @description('Optional. The name of the App Service Plan to create.')
 param appServicePlanName string = 'asp-projectestimate-${env}'
 
@@ -34,8 +40,40 @@ param storaceAccountName string = 'stoprojectestimate${env}'
 @description('Optional. Indicates number fo days to retain deleted items (containers, blobs, snapshosts, versions). Default value is 7')
 param daysSoftDelete int = 7
 
-// log analytics workspace
-// application insights
+resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2023-09-01' = {
+  name: logAnalyticsName
+  location: location
+  tags: tags
+  properties: {
+    sku: {
+      name: 'PerGB2018'
+    }
+    workspaceCapping: {
+      dailyQuotaGb: 5
+    }
+    retentionInDays: 30
+    features: {
+      enableLogAccessUsingOnlyResourcePermissions: true
+    }
+    publicNetworkAccessForIngestion: 'Enabled'
+    publicNetworkAccessForQuery: 'Enabled'
+  }
+}
+
+resource appInsights 'Microsoft.Insights/components@2020-02-02' = {
+  name: appInsightsName
+  kind: 'web'
+  location: location
+  tags: tags
+  properties: {
+    Application_Type: 'web'
+    IngestionMode: 'LogAnalytics'
+    SamplingPercentage: 50
+    WorkspaceResourceId: logAnalytics.id
+    Flow_Type: 'Bluefield'
+    Request_Source: 'rest'
+  }
+}
 
 resource appServicePlan 'Microsoft.Web/serverfarms@2024-04-01' = {
   name: appServicePlanName
@@ -75,63 +113,12 @@ resource apiWebApp 'Microsoft.Web/sites@2024-04-01' = {
   kind: 'app,linux'
 }
 
-// Azure OpenAI Service
-resource openAIService 'Microsoft.CognitiveServices/accounts@2024-10-01' = {
+module openAIService 'openAiService.bicep' = {
   name: openAIServiceName
-  location: location
-  sku: {
-    name: 'S0'
-  }
-  kind: 'OpenAI'
-  properties: {
-    apiProperties: {}
-    networkAcls: {
-      defaultAction: 'Allow'
-      virtualNetworkRules: []
-      ipRules: []
-    }
-    publicNetworkAccess: 'Enabled'
-  }
-
-  resource _ 'defenderForAISettings' = {
-    name: 'Default'
-    properties: {
-      state: 'Disabled'
-    }
-  }
-
-  resource gpt4o 'deployments' = {
-    name: 'gpt-4o'
-    sku: {
-      name: 'GlobalStandard'
-      capacity: 100
-    }
-    properties: {
-      model: {
-        format: 'OpenAI'
-        name: 'gpt-4o'
-      }
-      versionUpgradeOption: 'OnceNewDefaultVersionAvailable'
-      currentCapacity: 100
-      raiPolicyName: 'Microsoft.DefaultV2'
-    }
-  }
-
-  resource gpt4omini 'deployments' = {
-    name: 'gpt-4o-mini'
-    sku: {
-      name: 'GlobalStandard'
-      capacity: 100
-    }
-    properties: {
-      model: {
-        format: 'OpenAI'
-        name: 'gpt-4o-mini'
-      }
-      versionUpgradeOption: 'OnceNewDefaultVersionAvailable'
-      currentCapacity: 100
-      raiPolicyName: 'Microsoft.DefaultV2'
-    }
+  params: {
+    openAIServiceName: openAIServiceName
+    location: location
+    tags: tags
   }
 }
 
