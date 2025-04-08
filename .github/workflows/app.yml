@@ -1,4 +1,4 @@
-name: Deploy api
+name: Deploy app
 
 on:
   push:
@@ -6,15 +6,15 @@ on:
       - main
       - feature/app-service
     paths:
-      - src/api/**
-      - .github/workflows/api.yml
+      - src/app/**
+      - .github/workflows/app.yml
   pull_request:
     branches:
       - main
       - feature/app-service
     paths:
-      - src/api/**
-      - .github/workflows/api.yml
+      - src/app/**
+      - .github/workflows/app.yml
 
 jobs:
   build:
@@ -28,21 +28,28 @@ jobs:
           submodules: true
           clean: true
 
-      - name: Setup .NET SDK
-        uses: actions/setup-dotnet@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
         with:
-          dotnet-version: "9.0.x"
+          node-version: "20.x"
+          cache: "yarn"
 
-      - name: Publish project
+      - name: Install dependencies
         run: |
-          dotnet publish src/api --configuration Release --output publish -r linux-x64
+          yarn install --frozen-lockfile
+        working-directory: src/app
+
+      - name: Build project
+        run: |
+          yarn build
+        working-directory: src/app
 
       - name: Package artifact
         uses: actions/upload-artifact@v4
         with:
           if-no-files-found: error
-          name: api
-          path: publish
+          name: app
+          path: src/app/dist
 
   deploy:
     needs: build
@@ -54,8 +61,8 @@ jobs:
       - name: Download artifact
         uses: actions/download-artifact@v4
         with:
-          name: api
-          path: api
+          name: app
+          path: app
       - name: Azure CLI Login
         uses: azure/login@v2
         with:
@@ -66,5 +73,5 @@ jobs:
       - name: Deploy to Azure App Service
         uses: azure/webapps-deploy@v3
         with:
-          app-name: app-projectestimate-api-dev
-          package: api
+          app-name: app-projectestimate-app-dev
+          package: app
