@@ -33,7 +33,7 @@ resource openAIService 'Microsoft.CognitiveServices/accounts@2024-10-01' = {
     ]
     sku: {
       name: 'GlobalStandard'
-      capacity: 1
+      capacity: 2
     }
     properties: {
       model: {
@@ -41,7 +41,7 @@ resource openAIService 'Microsoft.CognitiveServices/accounts@2024-10-01' = {
         name: 'gpt-4o'
       }
       versionUpgradeOption: 'OnceNewDefaultVersionAvailable'
-      currentCapacity: 1
+      currentCapacity: 2
       raiPolicyName: 'Microsoft.DefaultV2'
     }
   }
@@ -53,7 +53,7 @@ resource openAIService 'Microsoft.CognitiveServices/accounts@2024-10-01' = {
     ]
     sku: {
       name: 'GlobalStandard'
-      capacity: 1
+      capacity: 2
     }
     properties: {
       model: {
@@ -61,7 +61,7 @@ resource openAIService 'Microsoft.CognitiveServices/accounts@2024-10-01' = {
         name: 'gpt-4o-mini'
       }
       versionUpgradeOption: 'OnceNewDefaultVersionAvailable'
-      currentCapacity: 1
+      currentCapacity: 2
       raiPolicyName: 'Microsoft.DefaultV2'
     }
   }
