@@ -34,10 +34,12 @@ try
         sp =>
         {
             var options = sp.GetRequiredService<IOptions<AzureOpenAiSettings>>().Value;
+            var loggerFactory = sp.GetRequiredService<ILoggerFactory>();
             return new AzureOpenAIChatCompletionService(
                 options.DeploymentName,
                 options.Endpoint,
-                options.ApiKey);
+                options.ApiKey,
+                loggerFactory: loggerFactory);
         });
     builder.Services.AddKeyedTransient<Kernel>("ConsultantAgent", (sp, _) => new Kernel(sp));
     builder.Services.AddScoped<ConsultantAgent>();
