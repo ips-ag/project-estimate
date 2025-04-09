@@ -98,45 +98,47 @@ resource appServicePlan 'Microsoft.Web/serverfarms@2024-04-01' = {
   kind: 'linux'
 }
 
-resource uiWebApp 'Microsoft.Web/sites@2024-04-01' = {
+module uiWebApp 'webApp.bicep' = {
   name: uiWebAppName
-  location: location
-  tags: tags
-  properties: {
-    serverFarmId: appServicePlan.id
+  params: {
+    name: uiWebAppName
+    location: location
+    tags: tags
+    appServicePlanId: appServicePlan.id
     clientAffinityEnabled: false
     httpsOnly: true
+    kind: 'app,linux'
   }
-  kind: 'app,linux'
 }
 
-resource apiWebApp 'Microsoft.Web/sites@2024-04-01' = {
+module apiWebApp 'webApp.bicep' = {
   name: apiWebAppName
-  location: location
-  tags: tags
-  properties: {
-    serverFarmId: appServicePlan.id
+  dependsOn: [uiWebApp]
+  params: {
+    name: apiWebAppName
+    location: location
+    tags: tags
+    appServicePlanId: appServicePlan.id
     clientAffinityEnabled: false
     httpsOnly: true
+    kind: 'app,linux'
   }
-  kind: 'app,linux'
+}
 
-  resource config 'config' = {
-    name: 'web'
-    properties: {
-      linuxFxVersion: 'DOTNETCORE|9.0'
-      cors: {
-        allowedOrigins: [
-          'https://${uiWebApp.properties.defaultHostName}'
-        ]
-        supportCredentials: false
-      }
-      appSettings: [
-        { name: 'APPLICATIONINSIGHTS_CONNECTION_STRING', value: appInsights.properties.ConnectionString }
-        { name: 'Azure__OpenAI__Endpoint', value: openAIService.outputs.endpoint }
-        { name: 'Azure__OpenAI__ApiKey', value: openAIService.outputs.apiKey }
-      ]
+resource apiWebAppConfig 'Microsoft.Web/sites/config@2024-04-01' = {
+  name: '${apiWebAppName}/web'
+  dependsOn: [apiWebApp]
+  properties: {
+    linuxFxVersion: 'DOTNETCORE|9.0'
+    cors: {
+      allowedOrigins: [uiWebApp.outputs.endpoint]
+      supportCredentials: false
     }
+    appSettings: [
+      { name: 'APPLICATIONINSIGHTS_CONNECTION_STRING', value: appInsights.properties.ConnectionString }
+      { name: 'Azure__OpenAI__Endpoint', value: openAIService.outputs.endpoint }
+      { name: 'Azure__OpenAI__ApiKey', value: openAIService.outputs.apiKey }
+    ]
   }
 }
 
@@ -199,9 +201,3 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2024-01-01' = {
     }
   }
 }
-
-output uiWebAppEndpoint string = 'https://${uiWebApp.properties.defaultHostName}'
-output uiWebAppName string = uiWebApp.name
-
-output apiWebAppEndpoint string = 'https://${apiWebApp.properties.defaultHostName}'
-output apiWebAppName string = apiWebApp.name
