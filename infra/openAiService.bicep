@@ -7,6 +7,9 @@ param location string = resourceGroup().location
 @description('Optional. Resource tags. Defaults to resource group tags.')
 param tags object = resourceGroup().tags
 
+@description('Optional. Deployment capacity.')
+param capacity int = 20
+
 resource openAIService 'Microsoft.CognitiveServices/accounts@2024-10-01' = {
   name: openAIServiceName
   location: location
@@ -33,7 +36,6 @@ resource openAIService 'Microsoft.CognitiveServices/accounts@2024-10-01' = {
     ]
     sku: {
       name: 'GlobalStandard'
-      capacity: 2
     }
     properties: {
       model: {
@@ -41,7 +43,7 @@ resource openAIService 'Microsoft.CognitiveServices/accounts@2024-10-01' = {
         name: 'gpt-4o'
       }
       versionUpgradeOption: 'OnceNewDefaultVersionAvailable'
-      currentCapacity: 2
+      currentCapacity: capacity
       raiPolicyName: 'Microsoft.DefaultV2'
     }
   }
@@ -53,7 +55,6 @@ resource openAIService 'Microsoft.CognitiveServices/accounts@2024-10-01' = {
     ]
     sku: {
       name: 'GlobalStandard'
-      capacity: 2
     }
     properties: {
       model: {
@@ -61,7 +62,7 @@ resource openAIService 'Microsoft.CognitiveServices/accounts@2024-10-01' = {
         name: 'gpt-4o-mini'
       }
       versionUpgradeOption: 'OnceNewDefaultVersionAvailable'
-      currentCapacity: 2
+      currentCapacity: capacity
       raiPolicyName: 'Microsoft.DefaultV2'
     }
   }
