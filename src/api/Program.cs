@@ -11,14 +11,16 @@ using ProjectEstimate.Repositories.Agents.Developer;
 using ProjectEstimate.Repositories.Configuration;
 using Serilog;
 
-Log.Logger = new LoggerConfiguration()
-    .WriteTo.Console()
-    .CreateBootstrapLogger();
+// Log.Logger = new LoggerConfiguration()
+//     .WriteTo.Console()
+//     .CreateBootstrapLogger();
 try
 {
     var builder = WebApplication.CreateBuilder(args);
     builder.Configuration.AddJsonFile("secrets.json", optional: true, reloadOnChange: true);
-    builder.Host.UseSerilog();
+    builder.Host.UseSerilog(
+        (context, configuration) =>
+            configuration.ReadFrom.Configuration(context.Configuration));
     builder.Services.AddControllers();
     builder.Services.AddCors();
     builder.Services.AddOpenApi();
@@ -57,9 +59,9 @@ try
 }
 catch (Exception ex)
 {
-    Log.Fatal(ex, "Application terminated unexpectedly");
+    // Log.Fatal(ex, "Application terminated unexpectedly");
 }
 finally
 {
-    Log.CloseAndFlush();
+    // Log.CloseAndFlush();
 }
