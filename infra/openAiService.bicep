@@ -36,6 +36,7 @@ resource openAIService 'Microsoft.CognitiveServices/accounts@2024-10-01' = {
     ]
     sku: {
       name: 'GlobalStandard'
+      capacity: capacity
     }
     properties: {
       model: {
@@ -55,6 +56,7 @@ resource openAIService 'Microsoft.CognitiveServices/accounts@2024-10-01' = {
     ]
     sku: {
       name: 'GlobalStandard'
+      capacity: capacity
     }
     properties: {
       model: {
