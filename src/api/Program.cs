@@ -18,7 +18,9 @@ try
 {
     var builder = WebApplication.CreateBuilder(args);
     builder.Configuration.AddJsonFile("secrets.json", optional: true, reloadOnChange: true);
-    builder.Host.UseSerilog();
+    builder.Host.UseSerilog(
+        (context, configuration) =>
+            configuration.ReadFrom.Configuration(context.Configuration));
     builder.Services.AddControllers();
     builder.Services.AddCors();
     builder.Services.AddOpenApi();
