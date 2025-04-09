@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - bug/broken-azure-deployment
     paths:
       - infra/**
       - .github/workflows/infra.yml
