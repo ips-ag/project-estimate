@@ -5,10 +5,11 @@ import sendIcon from "./assets/send.svg";
 import spinnerIcon from "./assets/spinner.svg";
 import logo from "./assets/logo.png";
 import { config } from "./config/config.ts";
+import * as signalR from "@microsoft/signalr";
 import './App.css';
 
 type Message = {
-  sender: "user" | "assistant";
+  sender: string;
   text: string;
 };
 
@@ -26,11 +27,27 @@ export default function App() {
   const [userInput, setUserInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
+  const connection = new signalR.HubConnectionBuilder()
+    .withUrl(config.apiUrl + "/hub")
+    .build();
+
+  connection.on("receiveMessage", (assistant: string, message: string) => {
+    setMessages((prevMessages) => [
+      ...prevMessages,
+      { sender: assistant, text: message },
+    ]);
+  });
+
+  connection.start().catch((err) => {
+    // TODO: signal connection error
+    console.error(err);
+  });
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!userInput.trim()) return;
 
-    const newMessages: Message[] = [...messages, { sender: "user", text: userInput }];
+    const newMessages: Message[] = [...messages, { sender: "User", text: userInput }];
     setMessages(newMessages);
 
     try {
@@ -43,8 +60,12 @@ export default function App() {
         body: JSON.stringify(request),
       });
       const data: ConversationResponse = await response.json();
-      if (!!data.output) {
-        setMessages([...newMessages, { sender: "assistant", text: data.output }]);
+      if (data.output !== undefined) {
+        const message: string = data.output;
+        setMessages(prevMessages => [
+          ...prevMessages,
+          { sender: "Assistant", text: message },
+        ]);
       }
     } catch {
       // Handle error if needed

@@ -2,19 +2,26 @@
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.AzureOpenAI;
 using ProjectEstimate.Repositories.Agents.Analyst.Models;
+using ProjectEstimate.Repositories.Hubs;
 
 namespace ProjectEstimate.Repositories.Agents.Analyst;
 
 internal class AnalystAgent
 {
+    private const string RoleName = "Analyst";
     private readonly Kernel _kernel;
     private readonly IChatCompletionService _chatCompletion;
     private readonly PromptExecutionSettings _executionSettings;
+    private readonly IUserInteraction _userInteraction;
 
-    public AnalystAgent([FromKeyedServices("AnalystAgent")] Kernel kernel, IChatCompletionService chatCompletion)
+    public AnalystAgent(
+        [FromKeyedServices("AnalystAgent")] Kernel kernel,
+        IChatCompletionService chatCompletion,
+        IUserInteraction userInteraction)
     {
         _kernel = kernel;
         _chatCompletion = chatCompletion;
+        _userInteraction = userInteraction;
         _executionSettings = new AzureOpenAIPromptExecutionSettings
         {
             FunctionChoiceBehavior = FunctionChoiceBehavior.Auto(),
@@ -37,7 +44,7 @@ internal class AnalystAgent
         List<RequirementVerificationModel> verifications = [];
         do
         {
-            // TODO: User interaction
+            await _userInteraction.WriteAssistantMessageAsync(RoleName, "Analyzing requirements ...", cancel);
             var result = await _chatCompletion.GetChatMessageContentAsync(
                 history,
                 executionSettings: _executionSettings,
@@ -46,7 +53,13 @@ internal class AnalystAgent
             if (result.Content is null) break;
             history.AddAssistantMessage(result.Content);
             // await _userInteraction.WriteAssistantMessageAsync(RoleName, result.Content, cancel);
-            if (result.Content.Contains("Requirement analysis complete")) break;
+            if (result.Content.Contains("Requirement analysis complete"))
+            {
+                await _userInteraction.WriteAssistantMessageAsync(RoleName, "Requirement analysis complete", cancel);
+                // ReSharper disable once RedundantJumpStatement
+                break;
+            }
+            // TODO: User interaction
             // string? userInput = await _userInteraction.ReadUserMessageAsync(cancel);
             // if (userInput is null) break;
             // history.AddUserMessage(userInput);
