@@ -1,12 +1,12 @@
 import React, { useState } from "react";
 import ReactMarkdown from "react-markdown";
-import remarkGfm from 'remark-gfm'
+import remarkGfm from "remark-gfm";
 import sendIcon from "./assets/send.svg";
 import spinnerIcon from "./assets/spinner.svg";
 import logo from "./assets/logo.png";
 import { config } from "./config/config.ts";
 import * as signalR from "@microsoft/signalr";
-import './App.css';
+import "./App.css";
 
 type Message = {
   sender: string;
@@ -26,22 +26,22 @@ export default function App() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [userInput, setUserInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isHandlerRegistered, setIsHandlerRegistered] = useState(false);
 
-  const connection = new signalR.HubConnectionBuilder()
-    .withUrl(config.apiUrl + "/hub")
-    .build();
+  if (!isHandlerRegistered) {
+    console.log("Registering SignalR handlers");
+    const connection = new signalR.HubConnectionBuilder().withUrl(config.apiUrl + "/hub").build();
 
-  connection.on("receiveMessage", (assistant: string, message: string) => {
-    setMessages((prevMessages) => [
-      ...prevMessages,
-      { sender: assistant, text: message },
-    ]);
-  });
-
-  connection.start().catch((err) => {
-    // TODO: signal connection error
-    console.error(err);
-  });
+    connection.start().catch((err) => {
+      // TODO: signal connection error
+      console.error(err);
+    });
+    connection.on("receiveMessage", (assistant: string, message: string) => {
+      setMessages((prevMessages) => [...prevMessages, { sender: assistant, text: message }]);
+    });
+    setIsHandlerRegistered(true);
+    console.log("Registered SignalR handlers");
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -62,10 +62,7 @@ export default function App() {
       const data: ConversationResponse = await response.json();
       if (data.output !== undefined) {
         const message: string = data.output;
-        setMessages(prevMessages => [
-          ...prevMessages,
-          { sender: "Assistant", text: message },
-        ]);
+        setMessages((prevMessages) => [...prevMessages, { sender: "Assistant", text: message }]);
       }
     } catch {
       // Handle error if needed
@@ -114,7 +111,7 @@ export default function App() {
       >
         {messages.map((msg, i) => (
           <div key={i} style={{ margin: "0.5rem 0" }}>
-            <strong>{msg.sender}:</strong> <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.text}</ReactMarkdown>
+            <strong>{msg.sender}</strong> <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.text}</ReactMarkdown>
           </div>
         ))}
       </div>
@@ -158,18 +155,9 @@ export default function App() {
           type="submit"
         >
           {isLoading ? (
-            <img
-              src={spinnerIcon}
-              alt="Loading..."
-              style={{ width: "100%", height: "100%" }}
-              className="spinner"
-            />
+            <img src={spinnerIcon} alt="Loading..." style={{ width: "100%", height: "100%" }} className="spinner" />
           ) : (
-            <img
-              src={sendIcon}
-              alt="Send"
-              style={{ width: "100%", height: "100%" }}
-            />
+            <img src={sendIcon} alt="Send" style={{ width: "100%", height: "100%" }} />
           )}
         </button>
       </form>
