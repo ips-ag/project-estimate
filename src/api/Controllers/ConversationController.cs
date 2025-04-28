@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using ProjectEstimate.Application.Models;
+using ProjectEstimate.Application.Request.Context;
 using ProjectEstimate.Repositories.Agents.Consultant;
 
 namespace ProjectEstimate.Controllers;
@@ -9,10 +10,12 @@ namespace ProjectEstimate.Controllers;
 public class ConversationController : ControllerBase
 {
     private readonly ConsultantAgent _agent;
+    private readonly IRequestContextAccessor _contextAccessor;
 
-    public ConversationController(IServiceProvider services)
+    public ConversationController(IServiceProvider services, IRequestContextAccessor contextAccessor)
     {
         _agent = services.GetRequiredService<ConsultantAgent>();
+        _contextAccessor = contextAccessor;
     }
 
     [HttpPost("", Name = nameof(CompleteConversation))]
@@ -21,6 +24,7 @@ public class ConversationController : ControllerBase
         [FromBody] ChatCompletionRequestModel requestModel,
         CancellationToken cancel)
     {
+        _contextAccessor.Context = new RequestContext(requestModel.ConnectionId);
         string? response = await _agent.ExecuteAsync(requestModel.Input, cancel);
         return new ChatCompletionResponseModel { Output = response };
     }

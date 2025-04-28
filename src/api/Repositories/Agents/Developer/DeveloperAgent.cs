@@ -4,6 +4,7 @@ using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.AzureOpenAI;
 using ProjectEstimate.Repositories.Agents.Developer.Models;
+using ProjectEstimate.Repositories.Hubs;
 
 #pragma warning disable SKEXP0010
 
@@ -11,14 +12,20 @@ namespace ProjectEstimate.Repositories.Agents.Developer;
 
 internal class DeveloperAgent
 {
+    private const string RoleName = "Developer";
     private readonly Kernel _kernel;
     private readonly IChatCompletionService _chatCompletion;
     private readonly PromptExecutionSettings _executionSettings;
+    private readonly IUserInteraction _userInteraction;
 
-    public DeveloperAgent([FromKeyedServices("DeveloperAgent")] Kernel kernel, IChatCompletionService chatCompletion)
+    public DeveloperAgent(
+        [FromKeyedServices("DeveloperAgent")] Kernel kernel,
+        IChatCompletionService chatCompletion,
+        IUserInteraction userInteraction)
     {
         _kernel = kernel;
         _chatCompletion = chatCompletion;
+        _userInteraction = userInteraction;
         _executionSettings = new AzureOpenAIPromptExecutionSettings
         {
             FunctionChoiceBehavior = FunctionChoiceBehavior.Auto(),
@@ -55,12 +62,13 @@ internal class DeveloperAgent
 
     public async ValueTask<EstimationModel?> ValidateEstimatesAsync(ChatHistory history, CancellationToken cancel)
     {
+        await _userInteraction.WriteAssistantMessageAsync(RoleName, "Validating estimations ...", cancel);
         var result = await _chatCompletion.GetChatMessageContentAsync(
             history,
             executionSettings: _executionSettings,
             kernel: _kernel,
             cancellationToken: cancel);
-        //await _userInteraction.WriteAssistantMessageAsync(RoleName, "Estimation validation complete", cancel);
+        await _userInteraction.WriteAssistantMessageAsync(RoleName, "Estimation validation complete", cancel);
         if (result.Content is null) return null;
         history.AddAssistantMessage(result.Content);
         try

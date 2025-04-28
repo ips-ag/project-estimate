@@ -4,6 +4,7 @@ using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.AzureOpenAI;
 using ProjectEstimate.Repositories.Agents.Architect.Models;
+using ProjectEstimate.Repositories.Hubs;
 
 #pragma warning disable SKEXP0010
 
@@ -11,14 +12,20 @@ namespace ProjectEstimate.Repositories.Agents.Architect;
 
 internal class ArchitectAgent
 {
+    private const string RoleName = "Architect";
     private readonly Kernel _kernel;
     private readonly IChatCompletionService _chatCompletion;
     private readonly PromptExecutionSettings _executionSettings;
+    private readonly IUserInteraction _userInteraction;
 
-    public ArchitectAgent([FromKeyedServices("ArchitectAgent")] Kernel kernel, IChatCompletionService chatCompletion)
+    public ArchitectAgent(
+        [FromKeyedServices("ArchitectAgent")] Kernel kernel,
+        IChatCompletionService chatCompletion,
+        IUserInteraction userInteraction)
     {
         _kernel = kernel;
         _chatCompletion = chatCompletion;
+        _userInteraction = userInteraction;
         _executionSettings = new AzureOpenAIPromptExecutionSettings
         {
             FunctionChoiceBehavior = FunctionChoiceBehavior.Auto(),
@@ -54,12 +61,13 @@ internal class ArchitectAgent
 
     public async ValueTask<EstimationModel?> EstimateAsync(ChatHistory history, CancellationToken cancel)
     {
+        await _userInteraction.WriteAssistantMessageAsync(RoleName, "Estimating requirements ...", cancel);
         var result = await _chatCompletion.GetChatMessageContentAsync(
             history,
             executionSettings: _executionSettings,
             kernel: _kernel,
             cancellationToken: cancel);
-        // await _userInteraction.WriteAssistantMessageAsync(RoleName, "Requirement estimation complete", cancel);
+        await _userInteraction.WriteAssistantMessageAsync(RoleName, "Requirement estimation complete", cancel);
         if (result.Content is null) return null;
         history.AddAssistantMessage(result.Content);
         try

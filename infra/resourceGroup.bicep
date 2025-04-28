@@ -132,7 +132,7 @@ resource apiWebAppConfig 'Microsoft.Web/sites/config@2024-04-01' = {
     linuxFxVersion: 'DOTNETCORE|9.0'
     cors: {
       allowedOrigins: [uiWebApp.outputs.endpoint]
-      supportCredentials: false
+      supportCredentials: true
     }
     appSettings: [
       { name: 'APPLICATIONINSIGHTS_CONNECTION_STRING', value: appInsights.properties.ConnectionString }
