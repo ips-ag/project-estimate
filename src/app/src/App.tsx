@@ -32,7 +32,10 @@ export default function App() {
 
   if (!isSignalrInitialized) {
     console.log("Registering SignalR handlers");
-    const connection = new signalR.HubConnectionBuilder().withUrl(config.apiUrl + "/hub").withAutomaticReconnect().build();
+    const connection = new signalR.HubConnectionBuilder()
+      .withUrl(config.apiUrl + "/hub")
+      .withAutomaticReconnect([0, 2000, 10000, 30000, 30000, 30000, 30000, 30000])
+      .build();
     connection
       .start()
       .then(() => {
@@ -127,9 +130,17 @@ export default function App() {
         }}
       >
         {messages.map((msg, i) => (
-          <div key={i} style={{ margin: "0.5rem 0" }}>
-            <strong>{msg.sender}</strong> <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.text}</ReactMarkdown>
-          </div>
+          <React.Fragment key={i}>
+            <div style={{ margin: "0.5rem 0" }}>
+              <strong>{msg.sender}</strong>{" "}
+              {msg.text.includes("\n") ? (
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.text}</ReactMarkdown>
+              ) : (
+                msg.text
+              )}
+            </div>
+            {i < messages.length - 1 && <hr style={{ width: "100%", border: "1px solid rgba(13, 13, 13, 0.05)" }} />}
+          </React.Fragment>
         ))}
       </div>
       <form
