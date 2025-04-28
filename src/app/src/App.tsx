@@ -14,6 +14,7 @@ type Message = {
 };
 
 type ConversationRequest = {
+  connectionId?: string;
   input?: string;
 };
 
@@ -26,20 +27,36 @@ export default function App() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [userInput, setUserInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [isHandlerRegistered, setIsHandlerRegistered] = useState(false);
+  const [isSignalrInitialized, setIsSignalrInitialized] = useState(false);
+  const [signalrConnectionId, setSignalrConnectionId] = useState<string | undefined>("");
 
-  if (!isHandlerRegistered) {
+  if (!isSignalrInitialized) {
     console.log("Registering SignalR handlers");
-    const connection = new signalR.HubConnectionBuilder().withUrl(config.apiUrl + "/hub").build();
+    const connection = new signalR.HubConnectionBuilder().withUrl(config.apiUrl + "/hub").withAutomaticReconnect().build();
+    connection
+      .start()
+      .then(() => {
+        if (connection.connectionId) {
+          console.log("Connected to SignalR with connection ID:", connection.connectionId);
+          setSignalrConnectionId(connection.connectionId);
+        }
+      })
+      .catch((err) => {
+        // TODO: signal connection error
+        console.error(err);
+      });
 
-    connection.start().catch((err) => {
-      // TODO: signal connection error
-      console.error(err);
+    connection.onreconnected((connectionId) => {
+      if (connectionId) {
+        setSignalrConnectionId(connectionId);
+        console.log("Reconnected to SignalR with connection ID:", connectionId);
+      }
     });
+
     connection.on("receiveMessage", (assistant: string, message: string) => {
       setMessages((prevMessages) => [...prevMessages, { sender: assistant, text: message }]);
     });
-    setIsHandlerRegistered(true);
+    setIsSignalrInitialized(true);
     console.log("Registered SignalR handlers");
   }
 
@@ -51,7 +68,7 @@ export default function App() {
     setMessages(newMessages);
 
     try {
-      const request: ConversationRequest = { input: userInput };
+      const request: ConversationRequest = { connectionId: signalrConnectionId, input: userInput };
       setIsLoading(true);
       setUserInput("");
       const response = await fetch(config.apiUrl + "/conversation", {
