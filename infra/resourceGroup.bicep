@@ -28,6 +28,9 @@ param appServicePlanSku string = 'B1'
 @description('Optional. The name of the Azure OpenAI Service to create.')
 param openAIServiceName string = 'openai-projectestimate-${env}'
 
+@description('Optional. The name of the Azure AI Document Intelligence to create.')
+param documentIntelligenceName string = 'di-projectestimate-${env}'
+
 @description('Optional. The name of the UI App Service to create.')
 param uiWebAppName string = 'app-projectestimate-ui-${env}'
 
@@ -81,6 +84,25 @@ module openAIService 'openAiService.bicep' = {
     openAIServiceName: openAIServiceName
     location: location
     tags: tags
+  }
+}
+
+resource documentIntelligence 'Microsoft.CognitiveServices/accounts@2024-10-01' = {
+  name: documentIntelligenceName
+  location: location
+  tags: tags
+  kind: 'FormRecognizer'
+  sku: {
+    name: 'S0'
+  }
+  properties: {
+    customSubDomainName: toLower(documentIntelligenceName)
+    publicNetworkAccess: 'Enabled'
+    networkAcls: {
+      defaultAction: 'Allow'
+      ipRules: []
+      virtualNetworkRules: []
+    }
   }
 }
 
@@ -138,6 +160,8 @@ resource apiWebAppConfig 'Microsoft.Web/sites/config@2024-04-01' = {
       { name: 'APPLICATIONINSIGHTS_CONNECTION_STRING', value: appInsights.properties.ConnectionString }
       { name: 'Azure__OpenAI__Endpoint', value: openAIService.outputs.endpoint }
       { name: 'Azure__OpenAI__ApiKey', value: openAIService.outputs.apiKey }
+      { name: 'Azure__DocumentIntelligence__Endpoint', value: documentIntelligence.properties.endpoint }
+      { name: 'Azure__DocumentIntelligence__ApiKey', value: documentIntelligence.listKeys().key1 }
     ]
   }
 }
