@@ -4,6 +4,7 @@ using Microsoft.SemanticKernel.ChatCompletion;
 using ProjectEstimate.Repositories.Agents.Analyst;
 using ProjectEstimate.Repositories.Agents.Architect;
 using ProjectEstimate.Repositories.Agents.Developer;
+using ProjectEstimate.Repositories.Documents;
 
 // using Microsoft.Extensions.DependencyInjection;
 // using Microsoft.SemanticKernel;
@@ -17,6 +18,8 @@ internal class ConsultantAgent
     private readonly ArchitectAgent _architectAgent;
 
     private readonly DeveloperAgent _developerAgent;
+
+    private readonly IDocumentRepository _documentRepository;
     // private readonly Kernel _kernel;
     // private readonly IChatCompletionService _chatCompletion;
     // private readonly PromptExecutionSettings _executionSettings;
@@ -29,7 +32,8 @@ internal class ConsultantAgent
         // IChatCompletionService chatCompletion,
         AnalystAgent analystAgent,
         ArchitectAgent architectAgent,
-        DeveloperAgent developerAgent)
+        DeveloperAgent developerAgent,
+        IDocumentRepository documentRepository)
     {
         // _kernel = kernel;
         // _chatCompletion = chatCompletion;
@@ -49,6 +53,7 @@ internal class ConsultantAgent
         _analystAgent = analystAgent;
         _architectAgent = architectAgent;
         _developerAgent = developerAgent;
+        _documentRepository = documentRepository;
     }
 
     /// <summary>
@@ -205,5 +210,10 @@ internal class ConsultantAgent
         // TODO: what to do excel file?
         workbook.SaveAs(stream, new SaveOptions { EvaluateFormulasBeforeSaving = true });
         return response.ToString();
+    }
+
+    public async ValueTask<string?> UploadFileAsync(Stream file, CancellationToken cancel)
+    {
+        return await _documentRepository.CreateDocumentAsync(file, cancel);
     }
 }

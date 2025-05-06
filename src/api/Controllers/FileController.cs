@@ -1,4 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using ProjectEstimate.Application.Models;
+using ProjectEstimate.Repositories.Agents.Consultant;
 
 namespace ProjectEstimate.Controllers;
 
@@ -6,17 +8,29 @@ namespace ProjectEstimate.Controllers;
 [ApiController]
 public class FileController : ControllerBase
 {
-    [HttpPost("upload", Name = nameof(UploadFile))]
-    [ProducesResponseType(typeof(bool), 200)]
-    public async Task<IActionResult> UploadFile(CancellationToken cancel)
+    private readonly ConsultantAgent _agent;
+
+    public FileController(IServiceProvider services)
+    {
+        _agent = services.GetRequiredService<ConsultantAgent>();
+    }
+
+    [HttpPost("", Name = nameof(UploadFile))]
+    [ProducesResponseType(typeof(FileUploadResponseModel), 200)]
+    public async Task<FileUploadResponseModel> UploadFile(CancellationToken cancel)
     {
         var result = await HttpContext.Request.BodyReader.ReadAsync(cancel);
+        await using var memoryStream = new MemoryStream();
         while (!result.IsCompleted)
         {
-            // Do something with buffer
-            //result.Buffer;
-            // TODO: save file and return blob URL
+            if (result.IsCanceled) return new FileUploadResponseModel();
+            foreach (var memory in result.Buffer)
+            {
+                await memoryStream.WriteAsync(memory, cancel);
+            }
         }
-        throw new NotImplementedException();
+        memoryStream.Seek(0, SeekOrigin.Begin);
+        string? location = await _agent.UploadFileAsync(memoryStream, cancel);
+        return new FileUploadResponseModel { Location = location };
     }
 }
