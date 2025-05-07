@@ -212,8 +212,8 @@ internal class ConsultantAgent
         return response.ToString();
     }
 
-    public async ValueTask<string?> UploadFileAsync(Stream file, CancellationToken cancel)
+    public async ValueTask<string?> UploadFileAsync(BinaryData content, string extension, CancellationToken cancel)
     {
-        return await _documentRepository.CreateDocumentAsync(file, cancel);
+        return await _documentRepository.CreateDocumentAsync(content, extension, cancel);
     }
 }

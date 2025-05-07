@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System.Net.Mime;
+using Microsoft.AspNetCore.Mvc;
 using ProjectEstimate.Application.Models;
 using ProjectEstimate.Repositories.Agents.Consultant;
 
@@ -19,18 +20,22 @@ public class FileController : ControllerBase
     [ProducesResponseType(typeof(FileUploadResponseModel), 200)]
     public async Task<FileUploadResponseModel> UploadFile(CancellationToken cancel)
     {
-        var result = await HttpContext.Request.BodyReader.ReadAsync(cancel);
-        await using var memoryStream = new MemoryStream();
-        while (!result.IsCompleted)
+        var data = await BinaryData.FromStreamAsync(HttpContext.Request.Body, cancel);
+        string extension = HttpContext.Request.Headers.ContentType.FirstOrDefault()?.ToLowerInvariant() switch
         {
-            if (result.IsCanceled) return new FileUploadResponseModel();
-            foreach (var memory in result.Buffer)
-            {
-                await memoryStream.WriteAsync(memory, cancel);
-            }
-        }
-        memoryStream.Seek(0, SeekOrigin.Begin);
-        string? location = await _agent.UploadFileAsync(memoryStream, cancel);
+            MediaTypeNames.Text.Plain => ".txt",
+            MediaTypeNames.Application.Pdf => ".pdf",
+            MediaTypeNames.Image.Jpeg => ".jpg",
+            MediaTypeNames.Image.Png => ".png",
+            MediaTypeNames.Image.Bmp => ".bmp",
+            MediaTypeNames.Image.Tiff => ".tiff",
+            "image/heif" => ".heif",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document" => ".docx",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" => ".xlsx",
+            "application/vnd.openxmlformats-officedocument.presentationml.presentation" => ".pptx",
+            _ => ".txt"
+        };
+        string? location = await _agent.UploadFileAsync(data, extension, cancel);
         return new FileUploadResponseModel { Location = location };
     }
 }

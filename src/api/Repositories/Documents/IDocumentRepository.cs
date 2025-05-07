@@ -2,5 +2,5 @@
 
 public interface IDocumentRepository
 {
-    public ValueTask<string> CreateDocumentAsync(Stream content, CancellationToken cancel);
+    public ValueTask<string?> CreateDocumentAsync(BinaryData content, string extension, CancellationToken cancel);
 }
