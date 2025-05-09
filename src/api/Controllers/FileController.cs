@@ -22,13 +22,16 @@ public class FileController : ControllerBase
     [HttpPost("", Name = nameof(UploadFile))]
     [ProducesResponseType(typeof(FileUploadResponseModel), 200)]
     [RequestSizeLimit(10 * 1024 * 1024)] // 10 MB
-    public async Task<FileUploadResponseModel> UploadFile(CancellationToken cancel)
+    public async Task<FileUploadResponseModel> UploadFile(
+        [FromForm(Name = "file")] IFormFile form,
+        CancellationToken cancel)
     {
-        var data = await BinaryData.FromStreamAsync(HttpContext.Request.Body, cancel);
-        var fileType = _fileTypeConverter.ToDomain(HttpContext.Request.Headers.ContentType.FirstOrDefault());
+        await using var stream = form.OpenReadStream();
+        var data = await BinaryData.FromStreamAsync(stream, cancel);
+        var fileType = _fileTypeConverter.ToDomain(form.FileName);
         if (fileType is null)
         {
-            return new FileUploadResponseModel { ErrorMessage = "Unsupported or missing file type" };
+            return new FileUploadResponseModel { ErrorMessage = "Unsupported file type" };
         }
         UserFile file = new(data, fileType.Value);
         string? location = await _agent.UploadFileAsync(file, cancel);

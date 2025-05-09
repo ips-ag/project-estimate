@@ -1,25 +1,26 @@
-﻿using System.Net.Mime;
-using ProjectEstimate.Domain;
+﻿using ProjectEstimate.Domain;
 
 namespace ProjectEstimate.Application.Converters;
 
 public class FileTypeConverter
 {
-    public FileType? ToDomain(string? contentType)
+    public FileType? ToDomain(string? fileName)
     {
-        return contentType?.ToLowerInvariant() switch
+        string? extension = Path.GetExtension(fileName);
+        return extension?.ToLowerInvariant() switch
         {
-            MediaTypeNames.Text.Plain => FileType.Text,
-            MediaTypeNames.Application.Pdf => FileType.Pdf,
-            MediaTypeNames.Text.Html => FileType.Html,
-            MediaTypeNames.Image.Jpeg => FileType.Jpeg,
-            MediaTypeNames.Image.Png => FileType.Png,
-            MediaTypeNames.Image.Bmp => FileType.Bmp,
-            MediaTypeNames.Image.Tiff => FileType.Tiff,
-            "image/heif" => FileType.Heif,
-            "application/vnd.openxmlformats-officedocument.wordprocessingml.document" => FileType.Docx,
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" => FileType.Xlsx,
-            "application/vnd.openxmlformats-officedocument.presentationml.presentation" => FileType.Pptx,
+            ".txt" => FileType.Text,
+            ".pdf" => FileType.Pdf,
+            ".html" => FileType.Html,
+            ".jpeg" => FileType.Jpeg,
+            ".jpg" => FileType.Jpeg,
+            ".png" => FileType.Png,
+            ".bmp" => FileType.Bmp,
+            ".tiff" => FileType.Tiff,
+            ".heif" => FileType.Heif,
+            ".docx" => FileType.Docx,
+            ".xlsx" => FileType.Xlsx,
+            ".pptx" => FileType.Pptx,
             _ => null
         };
     }
