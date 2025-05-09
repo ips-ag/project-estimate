@@ -1,6 +1,7 @@
-﻿using System.Net.Mime;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
+using ProjectEstimate.Application.Converters;
 using ProjectEstimate.Application.Models;
+using ProjectEstimate.Domain;
 using ProjectEstimate.Repositories.Agents.Consultant;
 
 namespace ProjectEstimate.Controllers;
@@ -10,32 +11,29 @@ namespace ProjectEstimate.Controllers;
 public class FileController : ControllerBase
 {
     private readonly ConsultantAgent _agent;
+    private readonly FileTypeConverter _fileTypeConverter;
 
-    public FileController(IServiceProvider services)
+    public FileController(IServiceProvider services, FileTypeConverter fileTypeConverter)
     {
         _agent = services.GetRequiredService<ConsultantAgent>();
+        _fileTypeConverter = fileTypeConverter;
     }
 
     [HttpPost("", Name = nameof(UploadFile))]
     [ProducesResponseType(typeof(FileUploadResponseModel), 200)]
+    [RequestSizeLimit(10 * 1024 * 1024)] // 10 MB
     public async Task<FileUploadResponseModel> UploadFile(CancellationToken cancel)
     {
         var data = await BinaryData.FromStreamAsync(HttpContext.Request.Body, cancel);
-        string extension = HttpContext.Request.Headers.ContentType.FirstOrDefault()?.ToLowerInvariant() switch
+        var fileType = _fileTypeConverter.ToDomain(HttpContext.Request.Headers.ContentType.FirstOrDefault());
+        if (fileType is null)
         {
-            MediaTypeNames.Text.Plain => ".txt",
-            MediaTypeNames.Application.Pdf => ".pdf",
-            MediaTypeNames.Image.Jpeg => ".jpg",
-            MediaTypeNames.Image.Png => ".png",
-            MediaTypeNames.Image.Bmp => ".bmp",
-            MediaTypeNames.Image.Tiff => ".tiff",
-            "image/heif" => ".heif",
-            "application/vnd.openxmlformats-officedocument.wordprocessingml.document" => ".docx",
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" => ".xlsx",
-            "application/vnd.openxmlformats-officedocument.presentationml.presentation" => ".pptx",
-            _ => ".txt"
-        };
-        string? location = await _agent.UploadFileAsync(data, extension, cancel);
-        return new FileUploadResponseModel { Location = location };
+            return new FileUploadResponseModel { ErrorMessage = "Unsupported or missing file type" };
+        }
+        UserFile file = new(data, fileType.Value);
+        string? location = await _agent.UploadFileAsync(file, cancel);
+        return string.IsNullOrEmpty(location)
+            ? new FileUploadResponseModel { ErrorMessage = "Failed to upload file" }
+            : new FileUploadResponseModel { Location = location };
     }
 }

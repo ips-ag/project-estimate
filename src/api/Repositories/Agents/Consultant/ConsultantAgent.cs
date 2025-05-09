@@ -1,6 +1,7 @@
 ﻿using System.Text;
 using ClosedXML.Excel;
 using Microsoft.SemanticKernel.ChatCompletion;
+using ProjectEstimate.Domain;
 using ProjectEstimate.Repositories.Agents.Analyst;
 using ProjectEstimate.Repositories.Agents.Architect;
 using ProjectEstimate.Repositories.Agents.Developer;
@@ -212,8 +213,8 @@ internal class ConsultantAgent
         return response.ToString();
     }
 
-    public async ValueTask<string?> UploadFileAsync(BinaryData content, string extension, CancellationToken cancel)
+    public async ValueTask<string?> UploadFileAsync(UserFile file, CancellationToken cancel)
     {
-        return await _documentRepository.CreateDocumentAsync(content, extension, cancel);
+        return await _documentRepository.CreateDocumentAsync(file, cancel);
     }
 }
