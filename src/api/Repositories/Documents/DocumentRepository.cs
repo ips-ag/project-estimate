@@ -27,4 +27,14 @@ internal class DocumentRepository : IDocumentRepository
         var location = blob.GenerateSasUri(BlobSasPermissions.Read, DateTimeOffset.UtcNow.AddDays(7));
         return location.OriginalString;
     }
+
+    public async ValueTask<string?> ReadDocumentAsync(string? location, CancellationToken cancel)
+    {
+        if (location is null) return null;
+        BlobClient blob = new(new Uri(location), new BlobClientOptions());
+        var result = await blob.DownloadContentAsync(cancel);
+        using var reader = new StreamReader(result.Value.Content.ToStream());
+        string content = await reader.ReadToEndAsync(cancel);
+        return content;
+    }
 }

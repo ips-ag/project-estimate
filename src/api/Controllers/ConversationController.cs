@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using ProjectEstimate.Application.Models;
 using ProjectEstimate.Application.Request.Context;
+using ProjectEstimate.Domain;
 using ProjectEstimate.Repositories.Agents.Consultant;
 
 namespace ProjectEstimate.Controllers;
@@ -25,7 +26,8 @@ public class ConversationController : ControllerBase
         CancellationToken cancel)
     {
         _contextAccessor.Context = new RequestContext(requestModel.ConnectionId);
-        string? response = await _agent.ExecuteAsync(requestModel.Input, cancel);
+        var request = new ChatCompletionRequest(requestModel.Input, requestModel.FileInput);
+        string? response = await _agent.ExecuteAsync(request, cancel);
         return new ChatCompletionResponseModel { Output = response };
     }
 }
