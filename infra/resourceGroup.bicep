@@ -38,7 +38,7 @@ param uiWebAppName string = 'app-projectestimate-ui-${env}'
 param apiWebAppName string = 'app-projectestimate-api-${env}'
 
 @description('Optional. The name of the Storage Account to create.')
-param storaceAccountName string = 'stoprojectestimate${env}'
+param storageAccountName string = 'stoprojectestimate${env}'
 
 @description('Optional. Indicates number fo days to retain deleted items (containers, blobs, snapshosts, versions). Default value is 7')
 param daysSoftDelete int = 7
@@ -75,6 +75,16 @@ resource appInsights 'Microsoft.Insights/components@2020-02-02' = {
     WorkspaceResourceId: logAnalytics.id
     Flow_Type: 'Bluefield'
     Request_Source: 'rest'
+  }
+}
+
+module storageAccount 'storageAccount.bicep' = {
+  name: storageAccountName
+  params: {
+    storageAccountName: storageAccountName
+    location: location
+    tags: tags
+    daysSoftDelete: daysSoftDelete
   }
 }
 
@@ -158,70 +168,11 @@ resource apiWebAppConfig 'Microsoft.Web/sites/config@2024-04-01' = {
     }
     appSettings: [
       { name: 'APPLICATIONINSIGHTS_CONNECTION_STRING', value: appInsights.properties.ConnectionString }
+      { name: 'Azure__StorageAccount__ConnectionString', value: storageAccount.outputs.connectionString }
       { name: 'Azure__OpenAI__Endpoint', value: openAIService.outputs.endpoint }
       { name: 'Azure__OpenAI__ApiKey', value: openAIService.outputs.apiKey }
       { name: 'Azure__DocumentIntelligence__Endpoint', value: documentIntelligence.properties.endpoint }
       { name: 'Azure__DocumentIntelligence__ApiKey', value: documentIntelligence.listKeys().key1 }
     ]
-  }
-}
-
-resource storageAccount 'Microsoft.Storage/storageAccounts@2024-01-01' = {
-  name: storaceAccountName
-  location: location
-  tags: tags
-  kind: 'StorageV2'
-  sku: {
-    name: 'Standard_LRS'
-  }
-  properties: {
-    accessTier: 'Hot'
-    allowBlobPublicAccess: true
-    allowSharedKeyAccess: true
-    supportsHttpsTrafficOnly: true
-  }
-
-  resource blobService 'blobServices' = {
-    name: 'default'
-    properties: {
-      cors: {
-        corsRules: [
-          {
-            allowedHeaders: [
-              '*'
-            ]
-            exposedHeaders: [
-              '*'
-            ]
-            allowedOrigins: [
-              '*'
-            ]
-            allowedMethods: [
-              'GET'
-            ]
-            maxAgeInSeconds: 3600
-          }
-        ]
-      }
-      isVersioningEnabled: true
-      lastAccessTimeTrackingPolicy: {
-        enable: true
-      }
-      containerDeleteRetentionPolicy: {
-        days: daysSoftDelete - 1
-        enabled: true
-      }
-      restorePolicy: {
-        enabled: true
-        days: daysSoftDelete - 1
-      }
-      deleteRetentionPolicy: {
-        enabled: true
-        days: daysSoftDelete
-      }
-      changeFeed: {
-        enabled: true
-      }
-    }
   }
 }

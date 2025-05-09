@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import sendIcon from "./assets/send.svg";
@@ -16,11 +16,17 @@ type Message = {
 type ConversationRequest = {
   connectionId?: string;
   input?: string;
+  fileInput?: string;
 };
 
 type ConversationResponse = {
   output?: string;
   responseRequired: boolean;
+};
+
+type FileUploadResponse = {
+  location: string;
+  errorMessage?: string;
 };
 
 export default function App() {
@@ -29,6 +35,9 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [isSignalrInitialized, setIsSignalrInitialized] = useState(false);
   const [signalrConnectionId, setSignalrConnectionId] = useState<string | undefined>("");
+  const [isUploading, setIsUploading] = useState(false);
+  const [fileInputLocation, setFileInputLocation] = useState<string | undefined>(undefined);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (!isSignalrInitialized) {
     console.log("Registering SignalR handlers");
@@ -63,17 +72,49 @@ export default function App() {
     console.log("Registered SignalR handlers");
   }
 
+  async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      setIsUploading(true);
+      const formData = new FormData();
+      formData.append("file", file, file.name);
+      const response = await fetch(config.apiUrl + "/file", {
+        method: "POST",
+        body: formData,
+      });
+      const data: FileUploadResponse = await response.json();
+      if (!data.errorMessage && data.location) {
+        setFileInputLocation(data.location);
+      } else {
+        console.error("File upload failed:", data.errorMessage);
+      }
+    } catch (error) {
+      console.error("Error uploading file:", error);
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!userInput.trim()) return;
+    if (!userInput.trim() && !fileInputLocation) return;
 
     const newMessages: Message[] = [...messages, { sender: "User", text: userInput }];
     setMessages(newMessages);
 
     try {
-      const request: ConversationRequest = { connectionId: signalrConnectionId, input: userInput };
+      const request: ConversationRequest = {
+        connectionId: signalrConnectionId,
+        input: userInput,
+        fileInput: fileInputLocation,
+      };
       setIsLoading(true);
       setUserInput("");
+      setFileInputLocation(undefined);
       const response = await fetch(config.apiUrl + "/conversation", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -152,6 +193,36 @@ export default function App() {
           borderRadius: "12px",
         }}
       >
+        <input
+          type="file"
+          accept=".txt"
+          style={{ display: "none" }}
+          onChange={handleFileUpload}
+          ref={fileInputRef}
+          id="fileInput"
+        />
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={isUploading || isLoading}
+          style={{
+            position: "absolute",
+            left: "0.5rem",
+            top: "50%",
+            transform: "translateY(-50%)",
+            zIndex: 10,
+            border: "none",
+            background: "none",
+            cursor: "pointer",
+            fontSize: "1.2rem",
+            padding: "0.5rem",
+            borderRadius: "4px",
+            backgroundColor: "#f0f0f0",
+          }}
+          title="Upload .txt file"
+        >
+          {isUploading ? "⏳" : fileInputLocation ? "📄" : "📎"}
+        </button>
         <textarea
           id="userInput"
           disabled={isLoading}
@@ -160,7 +231,8 @@ export default function App() {
             height: "6rem",
             borderRadius: "12px",
             fontSize: "1.4rem",
-            paddingLeft: "0.75rem",
+            paddingLeft: "2.5rem",
+            paddingRight: "2rem",
             paddingTop: "0.5rem",
             resize: "none",
           }}
@@ -171,7 +243,7 @@ export default function App() {
           id="submitButton"
           style={{
             position: "absolute",
-            right: "0",
+            right: "-3rem",
             top: "50%",
             transform: "translateY(-50%)",
             borderRadius: "50%",
