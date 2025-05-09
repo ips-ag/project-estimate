@@ -232,6 +232,7 @@ export default function App() {
             borderRadius: "12px",
             fontSize: "1.4rem",
             paddingLeft: "2.5rem",
+            paddingRight: "2rem",
             paddingTop: "0.5rem",
             resize: "none",
           }}
@@ -242,7 +243,7 @@ export default function App() {
           id="submitButton"
           style={{
             position: "absolute",
-            right: "0",
+            right: "-3rem",
             top: "50%",
             transform: "translateY(-50%)",
             borderRadius: "50%",
