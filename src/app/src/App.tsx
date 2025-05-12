@@ -216,8 +216,13 @@ export default function App() {
             cursor: "pointer",
             fontSize: "1.2rem",
             padding: "0.5rem",
-            borderRadius: "4px",
+            borderRadius: "50%",
             backgroundColor: "#f0f0f0",
+            width: "2rem",
+            height: "2rem",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
           }}
           title="Upload file (text, image, document)"
         >
