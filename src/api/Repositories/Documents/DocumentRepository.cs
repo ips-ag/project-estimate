@@ -45,17 +45,6 @@ internal class DocumentRepository : IDocumentRepository
     public async ValueTask<string?> ReadDocumentAsync(string? location, CancellationToken cancel)
     {
         if (location is null) return null;
-        // check if cached content for the location is already available
-        // if available, use cached value
-        // if not available, download the data from location
-        // use _contentExtractor service to extract the text
-        // save the extracted text to content cache
-        // return value from content cache
-        // BlobClient blob = new(new Uri(location), new BlobClientOptions());
-        // var result = await blob.DownloadContentAsync(cancel);
-        // using var reader = new StreamReader(result.Value.Content.ToStream());
-        // string content = await reader.ReadToEndAsync(cancel);
-        // return content;
         return await _contentExtractor.ExtractTextAsync(location, cancel);
     }
 }
