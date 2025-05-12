@@ -1,7 +1,7 @@
 import * as signalR from "@microsoft/signalr";
 import { config } from "../config/config";
 
-export class SignalRService {
+export default class SignalRService {
   private connection: signalR.HubConnection;
   private messageHandler: (assistant: string, message: string) => void = () => {};
   private connectionIdCallback: (connectionId: string) => void = () => {};

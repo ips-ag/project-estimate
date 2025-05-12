@@ -1,7 +1,7 @@
 import { config } from "../config/config";
 import { ConversationRequest, ConversationResponse, FileUploadResponse } from "../types";
 
-export class ApiService {
+export default class ApiService {
   /**
    * Uploads a file to the API
    */

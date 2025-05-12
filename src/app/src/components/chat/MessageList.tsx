@@ -7,7 +7,7 @@ type MessageListProps = {
   messages: Message[];
 };
 
-const MessageList: React.FC<MessageListProps> = ({ messages }) => {
+export default function MessageList({ messages }: MessageListProps) {
   return (
     <div className="message-list">
       {messages.map((message, index) => (
@@ -20,6 +20,4 @@ const MessageList: React.FC<MessageListProps> = ({ messages }) => {
       ))}
     </div>
   );
-};
-
-export default MessageList;
+}

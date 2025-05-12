@@ -9,13 +9,13 @@ type FileUploadButtonProps = {
   fileInputRef: React.RefObject<HTMLInputElement | null>;
 };
 
-const FileUploadButton: React.FC<FileUploadButtonProps> = ({
+export default function FileUploadButton({
   onFileSelect,
   isUploading,
   isDisabled,
   hasUploadedFile,
   fileInputRef,
-}) => {
+}: FileUploadButtonProps) {
   return (
     <>
       <input
@@ -37,6 +37,4 @@ const FileUploadButton: React.FC<FileUploadButtonProps> = ({
       </button>
     </>
   );
-};
-
-export default FileUploadButton;
+}

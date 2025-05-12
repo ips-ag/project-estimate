@@ -1,4 +1,3 @@
-import React from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Message } from "../../types";
@@ -8,7 +7,7 @@ type MessageItemProps = {
   message: Message;
 };
 
-const MessageItem: React.FC<MessageItemProps> = ({ message }) => {
+export default function MessageItem({ message }: MessageItemProps) {
   const { sender, text } = message;
 
   return (
@@ -21,6 +20,4 @@ const MessageItem: React.FC<MessageItemProps> = ({ message }) => {
       )}
     </div>
   );
-};
-
-export default MessageItem;
+}

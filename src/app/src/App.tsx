@@ -13,8 +13,8 @@ import MessageList from "./components/chat/MessageList";
 import ChatInput from "./components/chat/ChatInput";
 
 // Import services
-import { SignalRService } from "./services/SignalRService";
-import { ApiService } from "./services/ApiService";
+import SignalRService from "./services/SignalRService";
+import ApiService from "./services/ApiService";
 
 export default function App() {
   const [messages, setMessages] = useState<Message[]>([]);

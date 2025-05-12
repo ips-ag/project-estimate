@@ -1,6 +1,6 @@
 import React, { useRef } from "react";
 import FileUploadButton from "./FileUploadButton";
-import { ApiService } from "../../services/ApiService";
+import ApiService from "../../services/ApiService";
 import "./ChatInput.css";
 
 type ChatInputProps = {
@@ -15,7 +15,7 @@ type ChatInputProps = {
   spinnerIcon: string;
 };
 
-const ChatInput: React.FC<ChatInputProps> = ({
+export default function ChatInput({
   userInput,
   isLoading,
   isUploading,
@@ -25,7 +25,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
   onFileUpload,
   sendIcon,
   spinnerIcon,
-}) => {
+}: ChatInputProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -84,6 +84,4 @@ const ChatInput: React.FC<ChatInputProps> = ({
       </button>
     </form>
   );
-};
-
-export default ChatInput;
+}

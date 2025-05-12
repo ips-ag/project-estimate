@@ -1,11 +1,10 @@
-import React from "react";
 import "./Header.css";
 
 type HeaderProps = {
   logoSrc: string;
 };
 
-const Header: React.FC<HeaderProps> = ({ logoSrc }) => {
+export default function Header({ logoSrc }: HeaderProps) {
   return (
     <img
       src={logoSrc}
@@ -13,6 +12,4 @@ const Header: React.FC<HeaderProps> = ({ logoSrc }) => {
       className="app-header"
     />
   );
-};
-
-export default Header;
+}
