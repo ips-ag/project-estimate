@@ -8,6 +8,7 @@ using ProjectEstimate.Repositories.Agents.Consultant;
 using ProjectEstimate.Repositories.Agents.Developer;
 using ProjectEstimate.Repositories.Configuration;
 using ProjectEstimate.Repositories.Documents;
+using ProjectEstimate.Repositories.Documents.Converters;
 using ProjectEstimate.Repositories.Hubs;
 
 namespace ProjectEstimate.Repositories.Extensions;
@@ -54,6 +55,8 @@ public static class RepositoryExtensions
         services.AddSingleton<IUserInteraction, SignalrUserInteraction>();
 
         // repositories
+        services.AddScoped<ContentExtractor>();
+        services.AddScoped<FileTypeConverter>();
         services.AddScoped<IDocumentRepository, DocumentRepository>();
 
         return services;

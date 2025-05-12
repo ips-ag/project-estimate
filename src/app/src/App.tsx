@@ -195,7 +195,7 @@ export default function App() {
       >
         <input
           type="file"
-          accept=".txt"
+          accept=".txt,.html,.md,.markdown,.pdf,.jpg,.jpeg,.png,.bmp,.tiff,.heif,.docx,.xlsx,.pptx"
           style={{ display: "none" }}
           onChange={handleFileUpload}
           ref={fileInputRef}
@@ -216,10 +216,15 @@ export default function App() {
             cursor: "pointer",
             fontSize: "1.2rem",
             padding: "0.5rem",
-            borderRadius: "4px",
+            borderRadius: "50%",
             backgroundColor: "#f0f0f0",
+            width: "2rem",
+            height: "2rem",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
           }}
-          title="Upload .txt file"
+          title="Upload file (text, image, document)"
         >
           {isUploading ? "⏳" : fileInputLocation ? "📄" : "📎"}
         </button>
