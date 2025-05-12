@@ -10,8 +10,10 @@ public class FileTypeConverter
         return extension?.ToLowerInvariant() switch
         {
             ".txt" => FileType.Text,
-            ".pdf" => FileType.Pdf,
             ".html" => FileType.Html,
+            ".md" => FileType.Markdown,
+            ".markdown" => FileType.Markdown,
+            ".pdf" => FileType.Pdf,
             ".jpeg" => FileType.Jpeg,
             ".jpg" => FileType.Jpeg,
             ".png" => FileType.Png,

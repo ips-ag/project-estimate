@@ -40,10 +40,8 @@ internal class ContentExtractor
         {
             case FileType.Text:
             case FileType.Html:
-            {
-                using var reader = new StreamReader(result.Value.Content.ToStream());
-                return await reader.ReadToEndAsync(cancel);
-            }
+            case FileType.Markdown:
+                return result.Value.Content.ToString();
             case FileType.Pdf:
             case FileType.Jpeg:
             case FileType.Png:

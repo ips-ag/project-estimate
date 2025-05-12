@@ -4,6 +4,7 @@ public enum FileType
 {
     Text,
     Html,
+    Markdown,
     Pdf,
     Jpeg,
     Png,
@@ -23,6 +24,7 @@ public static class FileTypeExtensions
         {
             FileType.Text => ".txt",
             FileType.Html => ".html",
+            FileType.Markdown => ".md",
             FileType.Pdf => ".pdf",
             FileType.Jpeg => ".jpg",
             FileType.Png => ".png",

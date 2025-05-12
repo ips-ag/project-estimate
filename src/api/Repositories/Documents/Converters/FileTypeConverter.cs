@@ -10,6 +10,7 @@ internal class FileTypeConverter
         {
             FileType.Text => "text/plain",
             FileType.Html => "text/html",
+            FileType.Markdown => "text/markdown",
             FileType.Pdf => "application/pdf",
             FileType.Jpeg => "image/jpeg",
             FileType.Png => "image/png",
@@ -29,6 +30,7 @@ internal class FileTypeConverter
         {
             "text/plain" => FileType.Text,
             "text/html" => FileType.Html,
+            "text/markdown" => FileType.Markdown,
             "application/pdf" => FileType.Pdf,
             "image/jpeg" => FileType.Jpeg,
             "image/png" => FileType.Png,

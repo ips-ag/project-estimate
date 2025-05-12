@@ -195,7 +195,7 @@ export default function App() {
       >
         <input
           type="file"
-          accept=".txt,.html,.pdf,.jpg,.jpeg,.png,.bmp,.tiff,.heif,.docx,.xlsx,.pptx"
+          accept=".txt,.html,.md,.markdown,.pdf,.jpg,.jpeg,.png,.bmp,.tiff,.heif,.docx,.xlsx,.pptx"
           style={{ display: "none" }}
           onChange={handleFileUpload}
           ref={fileInputRef}
