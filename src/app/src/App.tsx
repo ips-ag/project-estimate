@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import "./App.css";
 
 // Import types
@@ -15,10 +15,7 @@ import ApiService from "./services/ApiService";
 
 export default function App() {
   const [messages, setMessages] = useState<Message[]>([]);
-  const [userInput, setUserInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
-  const [fileInputLocation, setFileInputLocation] = useState<string | undefined>(undefined);
   const [signalrConnectionId, setSignalrConnectionId] = useState<string | undefined>("");
   
   // Create SignalR service instance once
@@ -37,31 +34,28 @@ export default function App() {
     signalRServiceRef.current.initialize(handleMessageReceived, handleConnectionIdReceived);
   }, []);
   
-  // Handle form submission
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!userInput.trim() && !fileInputLocation) return;
+  // Handle sending messages and files
+  const handleSendMessage = async (message: string, fileLocation?: string) => {
+    // Don't send if both message and fileLocation are empty
+    if (!message.trim() && !fileLocation) return;
 
     // Add user message to the chat
-    const newMessages: Message[] = [...messages, { sender: "User", text: userInput }];
-    setMessages(newMessages);
+    setMessages(prevMessages => [...prevMessages, { sender: "User", text: message }]);
 
     try {
       const request = {
         connectionId: signalrConnectionId,
-        input: userInput,
-        fileInput: fileInputLocation,
+        input: message,
+        fileInput: fileLocation,
       };
       
       setIsLoading(true);
-      setUserInput("");
-      setFileInputLocation(undefined);
       
       const data = await ApiService.sendConversation(request);
       
       if (data.output !== undefined) {
-        const message: string = data.output;
-        setMessages((prevMessages) => [...prevMessages, { sender: "Assistant", text: message }]);
+        const assistantMessage: string = data.output;
+        setMessages((prevMessages) => [...prevMessages, { sender: "Assistant", text: assistantMessage }]);
       }
     } catch (error) {
       console.error("Error during conversation:", error);
@@ -77,16 +71,8 @@ export default function App() {
       <MessageList messages={messages} />
       
       <ChatInput
-        userInput={userInput}
         isLoading={isLoading}
-        isUploading={isUploading}
-        fileInputLocation={fileInputLocation}
-        onUserInputChange={setUserInput}
-        onSubmit={handleSubmit}
-        onFileUpload={(location) => {
-          setIsUploading(false);
-          setFileInputLocation(location);
-        }}
+        onSend={handleSendMessage}
       />
     </div>
   );

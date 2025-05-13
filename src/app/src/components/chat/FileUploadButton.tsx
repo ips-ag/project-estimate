@@ -1,28 +1,42 @@
-import React from "react";
+import { useRef } from "react";
+import type { ChangeEvent } from "react";
 import "./FileUploadButton.css";
 
 type FileUploadButtonProps = {
-  onFileSelect: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onFileSelected: (file: File) => void;
   isUploading: boolean;
   isDisabled: boolean;
   hasUploadedFile: boolean;
-  fileInputRef: React.RefObject<HTMLInputElement | null>;
 };
 
 export default function FileUploadButton({
-  onFileSelect,
+  onFileSelected,
   isUploading,
   isDisabled,
   hasUploadedFile,
-  fileInputRef,
 }: FileUploadButtonProps) {
+  // Internal file input reference
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      onFileSelected(file);
+    }
+    
+    // Reset input to allow selecting the same file again
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+  
   return (
     <>
       <input
         type="file"
         accept=".txt,.html,.md,.markdown,.pdf,.jpg,.jpeg,.png,.bmp,.tiff,.heif,.docx,.xlsx,.pptx"
         className="file-input"
-        onChange={onFileSelect}
+        onChange={handleFileChange}
         ref={fileInputRef}
         id="fileInput"
       />
