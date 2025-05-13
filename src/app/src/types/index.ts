@@ -1,5 +1,3 @@
-// Types used across the application
-
 export type Message = {
   sender: string;
   text: string;

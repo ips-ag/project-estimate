@@ -9,14 +9,9 @@ type FileSelectProps = {
   hasUploadedFile: boolean;
 };
 
-export default function FileSelect({
-  onFileSelected,
-  isUploading,
-  isDisabled,
-  hasUploadedFile,
-}: FileSelectProps) {
+export default function FileSelect({ onFileSelected, isUploading, isDisabled, hasUploadedFile }: FileSelectProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
+
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -26,7 +21,7 @@ export default function FileSelect({
       fileInputRef.current.value = "";
     }
   };
-  
+
   return (
     <>
       <input

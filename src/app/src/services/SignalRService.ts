@@ -19,14 +19,14 @@ export default class SignalRService {
     onConnectionIdReceived: (connectionId: string) => void
   ): void {
     if (this.isInitialized) return;
-    
+
     this.messageHandler = onMessageReceived;
     this.connectionIdCallback = onConnectionIdReceived;
-    
+
     this.connection.on("receiveMessage", (assistant: string, message: string) => {
       this.messageHandler(assistant, message);
     });
-    
+
     this.connection
       .start()
       .then(() => {
@@ -38,14 +38,14 @@ export default class SignalRService {
       .catch((err) => {
         console.error("SignalR Connection Error:", err);
       });
-    
+
     this.connection.onreconnected((connectionId) => {
       if (connectionId) {
         this.connectionIdCallback(connectionId);
         console.log("Reconnected to SignalR with connection ID:", connectionId);
       }
     });
-    
+
     this.isInitialized = true;
     console.log("SignalR service initialized");
   }

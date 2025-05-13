@@ -19,19 +19,19 @@ export default function App() {
     const handleMessageReceived = (assistant: string, message: string) => {
       setMessages((prevMessages) => [...prevMessages, { sender: assistant, text: message }]);
     };
-    
+
     const handleConnectionIdReceived = (connectionId: string) => {
       setSignalrConnectionId(connectionId);
     };
-    
+
     signalRServiceRef.current.initialize(handleMessageReceived, handleConnectionIdReceived);
   }, []);
-  
+
   const handleFileUpload = async (file: File) => {
     try {
       setIsUploading(true);
-      setFileInputLocation(undefined);      
-      const data = await ApiService.uploadFile(file);      
+      setFileInputLocation(undefined);
+      const data = await ApiService.uploadFile(file);
       if (!data.errorMessage && data.location) {
         setFileInputLocation(data.location);
       } else {
@@ -45,16 +45,16 @@ export default function App() {
   };
   const handleSendMessage = async (message: string) => {
     if (!message.trim() && !fileInputLocation) return;
-    setMessages(prevMessages => [...prevMessages, { sender: "User", text: message }]);
+    setMessages((prevMessages) => [...prevMessages, { sender: "User", text: message }]);
     try {
       const request = {
         connectionId: signalrConnectionId,
         input: message,
         fileInput: fileInputLocation,
-      };      
-      setIsLoading(true);      
+      };
+      setIsLoading(true);
       const data = await ApiService.completeConversation(request);
-      setFileInputLocation(undefined);      
+      setFileInputLocation(undefined);
       if (data.output !== undefined) {
         const assistantMessage: string = data.output;
         setMessages((prevMessages) => [...prevMessages, { sender: "Assistant", text: assistantMessage }]);
@@ -68,8 +68,8 @@ export default function App() {
 
   return (
     <div className="app-container">
-      <Header />      
-      <MessageList messages={messages} />      
+      <Header />
+      <MessageList messages={messages} />
       <ChatInput
         isLoading={isLoading}
         isUploading={isUploading}

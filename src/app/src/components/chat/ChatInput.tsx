@@ -13,13 +13,7 @@ type ChatInputProps = {
   onSend: (message: string) => void;
 };
 
-export default function ChatInput({
-  isLoading,
-  isUploading,
-  hasInputFile,
-  onFileSelected,
-  onSend
-}: ChatInputProps) {
+export default function ChatInput({ isLoading, isUploading, hasInputFile, onFileSelected, onSend }: ChatInputProps) {
   const [userInput, setUserInput] = useState("");
 
   const handleUserInputChange = (input: string) => {
@@ -33,7 +27,7 @@ export default function ChatInput({
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSubmit();
     }
@@ -47,7 +41,7 @@ export default function ChatInput({
         isDisabled={isUploading || isLoading}
         hasUploadedFile={hasInputFile}
       />
-      
+
       <textarea
         id="userInput"
         disabled={isLoading}
@@ -57,7 +51,7 @@ export default function ChatInput({
         onKeyDown={handleKeyDown}
         placeholder="Enter requirements or select a file..."
       />
-      
+
       <button
         id="submitButton"
         className="submit-button"

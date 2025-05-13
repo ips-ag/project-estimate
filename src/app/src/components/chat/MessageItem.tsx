@@ -13,11 +13,7 @@ export default function MessageItem({ message }: MessageItemProps) {
   return (
     <div className="message-item">
       <strong>{sender}</strong>{" "}
-      {text.includes("\n") ? (
-        <ReactMarkdown remarkPlugins={[remarkGfm]}>{text}</ReactMarkdown>
-      ) : (
-        text
-      )}
+      {text.includes("\n") ? <ReactMarkdown remarkPlugins={[remarkGfm]}>{text}</ReactMarkdown> : text}
     </div>
   );
 }

@@ -13,9 +13,7 @@ export default function MessageList({ messages }: MessageListProps) {
       {messages.map((message, index) => (
         <React.Fragment key={index}>
           <MessageItem message={message} />
-          {index < messages.length - 1 && (
-            <hr className="message-divider" />
-          )}
+          {index < messages.length - 1 && <hr className="message-divider" />}
         </React.Fragment>
       ))}
     </div>
