@@ -1,56 +1,40 @@
 import { useState } from "react";
 import type { KeyboardEvent } from "react";
 import FileUploadButton from "./FileUploadButton";
-import ApiService from "../../services/ApiService";
 import sendIcon from "../../assets/send.svg";
 import spinnerIcon from "../../assets/spinner.svg";
 import "./ChatInput.css";
 
 type ChatInputProps = {
   isLoading: boolean;
-  onSend: (message: string, fileLocation?: string) => void;
+  isUploading: boolean;
+  fileInputLocation: string | undefined;
+  onFileSelected: (file: File) => void;
+  onSend: (message: string) => void;
 };
 
 export default function ChatInput({
   isLoading,
+  isUploading,
+  fileInputLocation,
+  onFileSelected,
   onSend
 }: ChatInputProps) {
-  // Manage state internally
+  // Manage input state internally
   const [userInput, setUserInput] = useState("");
-  const [isUploading, setIsUploading] = useState(false);
-  const [fileInputLocation, setFileInputLocation] = useState<string | undefined>(undefined);
 
   const handleUserInputChange = (input: string) => {
     setUserInput(input);
-  };
-
-  const handleFileSelected = async (file: File) => {
-    try {
-      setIsUploading(true);
-      setFileInputLocation(undefined); // Reset any previous uploads
-      const data = await ApiService.uploadFile(file);
-      
-      if (!data.errorMessage && data.location) {
-        setFileInputLocation(data.location);
-      } else {
-        console.error("File upload failed:", data.errorMessage);
-      }
-    } catch (error) {
-      console.error("Error uploading file:", error);
-    } finally {
-      setIsUploading(false);
-    }
   };
 
   const handleSubmit = () => {
     if (!userInput.trim() && !fileInputLocation) return;
     
     // Send the message to parent component
-    onSend(userInput, fileInputLocation);
+    onSend(userInput);
     
     // Reset state after sending
     setUserInput("");
-    setFileInputLocation(undefined);
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -64,7 +48,7 @@ export default function ChatInput({
   return (
     <div className="chat-form">
       <FileUploadButton
-        onFileSelected={handleFileSelected}
+        onFileSelected={onFileSelected}
         isUploading={isUploading}
         isDisabled={isUploading || isLoading}
         hasUploadedFile={!!fileInputLocation}

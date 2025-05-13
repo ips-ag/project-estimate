@@ -16,6 +16,8 @@ import ApiService from "./services/ApiService";
 export default function App() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [fileInputLocation, setFileInputLocation] = useState<string | undefined>(undefined);
   const [signalrConnectionId, setSignalrConnectionId] = useState<string | undefined>("");
   
   // Create SignalR service instance once
@@ -34,10 +36,30 @@ export default function App() {
     signalRServiceRef.current.initialize(handleMessageReceived, handleConnectionIdReceived);
   }, []);
   
+  // Handle file uploads
+  const handleFileUpload = async (file: File) => {
+    try {
+      setIsUploading(true);
+      setFileInputLocation(undefined); // Reset any previous uploads
+      
+      const data = await ApiService.uploadFile(file);
+      
+      if (!data.errorMessage && data.location) {
+        setFileInputLocation(data.location);
+      } else {
+        console.error("File upload failed:", data.errorMessage);
+      }
+    } catch (error) {
+      console.error("Error uploading file:", error);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+  
   // Handle sending messages and files
-  const handleSendMessage = async (message: string, fileLocation?: string) => {
-    // Don't send if both message and fileLocation are empty
-    if (!message.trim() && !fileLocation) return;
+  const handleSendMessage = async (message: string) => {
+    // Don't send if both message and fileInputLocation are empty
+    if (!message.trim() && !fileInputLocation) return;
 
     // Add user message to the chat
     setMessages(prevMessages => [...prevMessages, { sender: "User", text: message }]);
@@ -46,12 +68,15 @@ export default function App() {
       const request = {
         connectionId: signalrConnectionId,
         input: message,
-        fileInput: fileLocation,
+        fileInput: fileInputLocation,
       };
       
       setIsLoading(true);
       
       const data = await ApiService.sendConversation(request);
+      
+      // Reset file input after sending
+      setFileInputLocation(undefined);
       
       if (data.output !== undefined) {
         const assistantMessage: string = data.output;
@@ -72,6 +97,9 @@ export default function App() {
       
       <ChatInput
         isLoading={isLoading}
+        isUploading={isUploading}
+        fileInputLocation={fileInputLocation}
+        onFileSelected={handleFileUpload}
         onSend={handleSendMessage}
       />
     </div>
