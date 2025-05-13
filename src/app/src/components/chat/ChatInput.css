@@ -1,0 +1,44 @@
+.chat-form {
+  position: relative;
+  width: 70%;
+  margin: 1rem;
+  border-radius: 12px;
+}
+
+.chat-textarea {
+  width: 100%;
+  height: 6rem;
+  border-radius: 12px;
+  font-size: 1.4rem;
+  padding-left: 2.5rem;
+  padding-right: 2.5rem;
+  padding-top: 0.5rem;
+  resize: none;
+}
+
+.submit-button {
+  position: absolute;
+  right: -3rem;
+  top: 50%;
+  transform: translateY(-50%);
+  border-radius: 50%;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  transition: none;
+}
+
+.button-icon {
+  width: 100%;
+  height: 100%;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+}
