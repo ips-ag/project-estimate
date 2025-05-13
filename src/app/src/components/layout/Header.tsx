@@ -1,15 +1,6 @@
+import logo from "../../assets/logo.png";
 import "./Header.css";
 
-type HeaderProps = {
-  logoSrc: string;
-};
-
-export default function Header({ logoSrc }: HeaderProps) {
-  return (
-    <img
-      src={logoSrc}
-      alt="logo"
-      className="app-header"
-    />
-  );
+export default function Header() {
+  return <img src={logo} alt="logo" className="app-header" />;
 }

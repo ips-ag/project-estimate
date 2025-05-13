@@ -1,7 +1,4 @@
 import React, { useState, useEffect, useRef } from "react";
-import sendIcon from "./assets/send.svg";
-import spinnerIcon from "./assets/spinner.svg";
-import logo from "./assets/logo.png";
 import "./App.css";
 
 // Import types
@@ -75,7 +72,7 @@ export default function App() {
 
   return (
     <div className="app-container">
-      <Header logoSrc={logo} />
+      <Header />
       
       <MessageList messages={messages} />
       
@@ -90,8 +87,6 @@ export default function App() {
           setIsUploading(false);
           setFileInputLocation(location);
         }}
-        sendIcon={sendIcon}
-        spinnerIcon={spinnerIcon}
       />
     </div>
   );

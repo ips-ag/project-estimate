@@ -1,6 +1,8 @@
 import React, { useRef } from "react";
 import FileUploadButton from "./FileUploadButton";
 import ApiService from "../../services/ApiService";
+import sendIcon from "../../assets/send.svg";
+import spinnerIcon from "../../assets/spinner.svg";
 import "./ChatInput.css";
 
 type ChatInputProps = {
@@ -11,8 +13,6 @@ type ChatInputProps = {
   onUserInputChange: (input: string) => void;
   onSubmit: (e: React.FormEvent) => void;
   onFileUpload: (location: string | undefined) => void;
-  sendIcon: string;
-  spinnerIcon: string;
 };
 
 export default function ChatInput({
@@ -22,9 +22,7 @@ export default function ChatInput({
   fileInputLocation,
   onUserInputChange,
   onSubmit,
-  onFileUpload,
-  sendIcon,
-  spinnerIcon,
+  onFileUpload
 }: ChatInputProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
