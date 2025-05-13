@@ -1,20 +1,20 @@
 import { useRef } from "react";
 import type { ChangeEvent } from "react";
-import "./FileUploadButton.css";
+import "./FileSelect.css";
 
-type FileUploadButtonProps = {
+type FileSelectProps = {
   onFileSelected: (file: File) => void;
   isUploading: boolean;
   isDisabled: boolean;
   hasUploadedFile: boolean;
 };
 
-export default function FileUploadButton({
+export default function FileSelect({
   onFileSelected,
   isUploading,
   isDisabled,
   hasUploadedFile,
-}: FileUploadButtonProps) {
+}: FileSelectProps) {
   // Internal file input reference
   const fileInputRef = useRef<HTMLInputElement>(null);
   

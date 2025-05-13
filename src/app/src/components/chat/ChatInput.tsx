@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { KeyboardEvent } from "react";
-import FileUploadButton from "./FileUploadButton";
+import FileSelect from "./FileSelect";
 import sendIcon from "../../assets/send.svg";
 import spinnerIcon from "../../assets/spinner.svg";
 import "./ChatInput.css";
@@ -8,7 +8,7 @@ import "./ChatInput.css";
 type ChatInputProps = {
   isLoading: boolean;
   isUploading: boolean;
-  fileInputLocation: string | undefined;
+  hasInputFile: boolean;
   onFileSelected: (file: File) => void;
   onSend: (message: string) => void;
 };
@@ -16,7 +16,7 @@ type ChatInputProps = {
 export default function ChatInput({
   isLoading,
   isUploading,
-  fileInputLocation,
+  hasInputFile,
   onFileSelected,
   onSend
 }: ChatInputProps) {
@@ -28,7 +28,7 @@ export default function ChatInput({
   };
 
   const handleSubmit = () => {
-    if (!userInput.trim() && !fileInputLocation) return;
+    if (!userInput.trim() && !hasInputFile) return;
     
     // Send the message to parent component
     onSend(userInput);
@@ -47,11 +47,11 @@ export default function ChatInput({
 
   return (
     <div className="chat-form">
-      <FileUploadButton
+      <FileSelect
         onFileSelected={onFileSelected}
         isUploading={isUploading}
         isDisabled={isUploading || isLoading}
-        hasUploadedFile={!!fileInputLocation}
+        hasUploadedFile={hasInputFile}
       />
       
       <textarea
@@ -69,7 +69,7 @@ export default function ChatInput({
         className="submit-button"
         type="button"
         onClick={handleSubmit}
-        disabled={isLoading || (!userInput.trim() && !fileInputLocation)}
+        disabled={isLoading || (!userInput.trim() && !hasInputFile)}
       >
         {isLoading ? (
           <img src={spinnerIcon} alt="Loading..." className="button-icon spinner" />

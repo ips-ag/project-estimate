@@ -98,7 +98,7 @@ export default function App() {
       <ChatInput
         isLoading={isLoading}
         isUploading={isUploading}
-        fileInputLocation={fileInputLocation}
+        hasInputFile={!!fileInputLocation}
         onFileSelected={handleFileUpload}
         onSend={handleSendMessage}
       />
