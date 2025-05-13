@@ -15,7 +15,6 @@ export default function FileSelect({
   isDisabled,
   hasUploadedFile,
 }: FileSelectProps) {
-  // Internal file input reference
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -23,8 +22,6 @@ export default function FileSelect({
     if (file) {
       onFileSelected(file);
     }
-    
-    // Reset input to allow selecting the same file again
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }

@@ -23,12 +23,10 @@ export default class SignalRService {
     this.messageHandler = onMessageReceived;
     this.connectionIdCallback = onConnectionIdReceived;
     
-    // Set up message handler
     this.connection.on("receiveMessage", (assistant: string, message: string) => {
       this.messageHandler(assistant, message);
     });
     
-    // Start the connection
     this.connection
       .start()
       .then(() => {
@@ -41,7 +39,6 @@ export default class SignalRService {
         console.error("SignalR Connection Error:", err);
       });
     
-    // Handle reconnection
     this.connection.onreconnected((connectionId) => {
       if (connectionId) {
         this.connectionIdCallback(connectionId);

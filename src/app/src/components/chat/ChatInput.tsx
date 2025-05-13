@@ -20,7 +20,6 @@ export default function ChatInput({
   onFileSelected,
   onSend
 }: ChatInputProps) {
-  // Manage input state internally
   const [userInput, setUserInput] = useState("");
 
   const handleUserInputChange = (input: string) => {
@@ -29,18 +28,13 @@ export default function ChatInput({
 
   const handleSubmit = () => {
     if (!userInput.trim() && !hasInputFile) return;
-    
-    // Send the message to parent component
     onSend(userInput);
-    
-    // Reset state after sending
     setUserInput("");
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
-    // Submit on Enter without Shift key
     if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault(); // prevent adding a new line
+      e.preventDefault();
       handleSubmit();
     }
   };
@@ -61,7 +55,7 @@ export default function ChatInput({
         value={userInput}
         onChange={(e) => handleUserInputChange(e.target.value)}
         onKeyDown={handleKeyDown}
-        placeholder="Type a message or select a file..."
+        placeholder="Enter requirements or select a file..."
       />
       
       <button
