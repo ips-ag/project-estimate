@@ -5,6 +5,7 @@ using ProjectEstimate.Repositories.Agents.Analyst;
 using ProjectEstimate.Repositories.Agents.Architect;
 using ProjectEstimate.Repositories.Agents.Developer;
 using ProjectEstimate.Repositories.Documents;
+using ProjectEstimate.Repositories.Hubs;
 
 // using ClosedXML.Excel;
 // using Microsoft.Extensions.DependencyInjection;
@@ -15,12 +16,13 @@ namespace ProjectEstimate.Repositories.Agents.Consultant;
 
 internal class ConsultantAgent
 {
+    private const string RoleName = "Consultant";
     private readonly AnalystAgent _analystAgent;
     private readonly ArchitectAgent _architectAgent;
-
     private readonly DeveloperAgent _developerAgent;
-
+    private readonly IUserInteraction _userInteraction;
     private readonly IDocumentRepository _documentRepository;
+
     // private readonly Kernel _kernel;
     // private readonly IChatCompletionService _chatCompletion;
     // private readonly PromptExecutionSettings _executionSettings;
@@ -34,6 +36,7 @@ internal class ConsultantAgent
         AnalystAgent analystAgent,
         ArchitectAgent architectAgent,
         DeveloperAgent developerAgent,
+        IUserInteraction userInteraction,
         IDocumentRepository documentRepository)
     {
         // _kernel = kernel;
@@ -54,6 +57,7 @@ internal class ConsultantAgent
         _analystAgent = analystAgent;
         _architectAgent = architectAgent;
         _developerAgent = developerAgent;
+        _userInteraction = userInteraction;
         _documentRepository = documentRepository;
     }
 
@@ -75,19 +79,25 @@ internal class ConsultantAgent
         // inputWorksheet.Columns().AdjustToContents();
 
         // Add user input
-        _history.AddUserMessage(
+        var userMessage =
             $"""
              User prompt:
-             \"\"\"
-             {userInput}
-             \"\"\"
+             \"\"\"{userInput}\"\"\"
              Additional context:
-             \"\"\"
-             {fileInput}
-             \"\"\"
-             """);
+             \"\"\"{fileInput}\"\"\"
+             """;
+        _history.AddUserMessage(userMessage);
 
         // consult analyst
+        foreach (var message in _history)
+        {
+            if (message.Content is null || message.Role == AuthorRole.System) continue;
+            await _userInteraction.WriteAssistantMessageAsync(
+                assistant: RoleName,
+                message: $"➜ **Analyst** Sending message *{message.Content}*",
+                logLevel: LogLevel.Debug,
+                cancel: cancellationToken);
+        }
         var verifications = await _analystAgent.VerifyRequirementsAsync(_history, cancellationToken);
         // if (verifications.Count > 0)
         // {
@@ -104,6 +114,15 @@ internal class ConsultantAgent
         //     }
         //     verificationWorksheet.Columns().AdjustToContents();
         // }
+        foreach (var message in _history)
+        {
+            if (message.Content is null || message.Role == AuthorRole.System) continue;
+            await _userInteraction.WriteAssistantMessageAsync(
+                assistant: RoleName,
+                message: $"➜ **Architect** Sending message *{message.Content}*",
+                logLevel: LogLevel.Debug,
+                cancel: cancellationToken);
+        }
 
         var initialEstimates = await _architectAgent.EstimateAsync(_history, cancellationToken);
         // if (initialEstimates is not null && initialEstimates.UserStories.Count > 0)
@@ -138,6 +157,15 @@ internal class ConsultantAgent
         //     initialEstimatesWorksheet.Columns().AdjustToContents();
         // }
 
+        foreach (var message in _history)
+        {
+            if (message.Content is null || message.Role == AuthorRole.System) continue;
+            await _userInteraction.WriteAssistantMessageAsync(
+                assistant: RoleName,
+                message: $"➜ **Developer** Sending message *{message.Content}*",
+                logLevel: LogLevel.Debug,
+                cancel: cancellationToken);
+        }
         var estimates = await _developerAgent.ValidateEstimatesAsync(_history, cancellationToken);
         StringBuilder response = new();
         if (estimates is not null && estimates.UserStories.Count > 0)
