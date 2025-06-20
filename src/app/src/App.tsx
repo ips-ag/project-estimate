@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Message } from "./types";
+import { Message, LogLevel } from "./types";
 import Header from "./components/layout/Header";
 import MessageList from "./components/chat/MessageList";
 import ChatInput from "./components/chat/ChatInput";
@@ -16,8 +16,8 @@ export default function App() {
   const signalRServiceRef = useRef<SignalRService>(new SignalRService());
 
   useEffect(() => {
-    const handleMessageReceived = (assistant: string, message: string) => {
-      setMessages((prevMessages) => [...prevMessages, { sender: assistant, text: message }]);
+    const handleMessageReceived = (assistant: string, message: string, logLevel: LogLevel = LogLevel.Info) => {
+      setMessages((prevMessages) => [...prevMessages, { sender: assistant, text: message, logLevel }]);
     };
 
     const handleConnectionIdReceived = (connectionId: string) => {
@@ -45,7 +45,7 @@ export default function App() {
   };
   const handleSendMessage = async (message: string) => {
     if (!message.trim() && !fileInputLocation) return;
-    setMessages((prevMessages) => [...prevMessages, { sender: "User", text: message }]);
+    setMessages((prevMessages) => [...prevMessages, { sender: "User", text: message, logLevel: LogLevel.Info }]);
     try {
       const request = {
         connectionId: signalrConnectionId,
@@ -57,7 +57,7 @@ export default function App() {
       setFileInputLocation(undefined);
       if (data.output !== undefined) {
         const assistantMessage: string = data.output;
-        setMessages((prevMessages) => [...prevMessages, { sender: "Assistant", text: assistantMessage }]);
+        setMessages((prevMessages) => [...prevMessages, { sender: "Assistant", text: assistantMessage, logLevel: LogLevel.Info }]);
       }
     } catch (error) {
       console.error("Error during conversation:", error);

@@ -2,5 +2,9 @@
 
 internal interface IUserInteraction
 {
-    ValueTask WriteAssistantMessageAsync(string assistant, string message, CancellationToken cancel);
+    ValueTask WriteAssistantMessageAsync(
+        string assistant,
+        string message,
+        CancellationToken cancel,
+        LogLevel logLevel = LogLevel.Information);
 }

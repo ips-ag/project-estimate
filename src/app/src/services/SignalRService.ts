@@ -1,9 +1,10 @@
 import * as signalR from "@microsoft/signalr";
 import { config } from "../config/config";
+import { LogLevel } from "../types";
 
 export default class SignalRService {
   private connection: signalR.HubConnection;
-  private messageHandler: (assistant: string, message: string) => void = () => {};
+  private messageHandler: (assistant: string, message: string, logLevel: LogLevel) => void = () => {};
   private connectionIdCallback: (connectionId: string) => void = () => {};
   private isInitialized = false;
 
@@ -15,7 +16,7 @@ export default class SignalRService {
   }
 
   public initialize(
-    onMessageReceived: (assistant: string, message: string) => void,
+    onMessageReceived: (assistant: string, message: string, logLevel: LogLevel) => void,
     onConnectionIdReceived: (connectionId: string) => void
   ): void {
     if (this.isInitialized) return;
@@ -23,8 +24,8 @@ export default class SignalRService {
     this.messageHandler = onMessageReceived;
     this.connectionIdCallback = onConnectionIdReceived;
 
-    this.connection.on("receiveMessage", (assistant: string, message: string) => {
-      this.messageHandler(assistant, message);
+    this.connection.on("receiveMessage", (assistant: string, message: string, logLevel: LogLevel = LogLevel.Info) => {
+      this.messageHandler(assistant, message, logLevel);
     });
 
     this.connection

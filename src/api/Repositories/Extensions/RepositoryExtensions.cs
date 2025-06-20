@@ -10,6 +10,7 @@ using ProjectEstimate.Repositories.Configuration;
 using ProjectEstimate.Repositories.Documents;
 using ProjectEstimate.Repositories.Documents.Converters;
 using ProjectEstimate.Repositories.Hubs;
+using ProjectEstimate.Repositories.Hubs.Converters;
 
 namespace ProjectEstimate.Repositories.Extensions;
 
@@ -53,6 +54,7 @@ public static class RepositoryExtensions
 
         // interaction
         services.AddSingleton<IUserInteraction, SignalrUserInteraction>();
+        services.AddSingleton<LogLevelConverter>();
 
         // repositories
         services.AddScoped<ContentExtractor>();
