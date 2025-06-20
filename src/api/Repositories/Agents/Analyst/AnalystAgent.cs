@@ -45,6 +45,15 @@ internal class AnalystAgent
         do
         {
             await _userInteraction.WriteAssistantMessageAsync(RoleName, "Analyzing requirements ...", cancel);
+            foreach (var message in history)
+            {
+                if (message.Content is null || message.Role == AuthorRole.System) continue;
+                await _userInteraction.WriteAssistantMessageAsync(
+                    assistant: RoleName,
+                    message: $"Analyzing *{message.Content}*",
+                    logLevel: LogLevel.Debug,
+                    cancel: cancel);
+            }
             var result = await _chatCompletion.GetChatMessageContentAsync(
                 history,
                 executionSettings: _executionSettings,
@@ -55,7 +64,6 @@ internal class AnalystAgent
             // await _userInteraction.WriteAssistantMessageAsync(RoleName, result.Content, cancel);
             if (result.Content.Contains("Requirement analysis complete"))
             {
-                await _userInteraction.WriteAssistantMessageAsync(RoleName, "Requirement analysis complete", cancel);
                 // ReSharper disable once RedundantJumpStatement
                 break;
             }
@@ -66,6 +74,7 @@ internal class AnalystAgent
             // verifications.Add(new RequirementVerificationModel(result.Content, userInput));
             break;
         } while (true);
+        await _userInteraction.WriteAssistantMessageAsync(RoleName, "Requirement analysis complete", cancel);
         return verifications;
     }
 }

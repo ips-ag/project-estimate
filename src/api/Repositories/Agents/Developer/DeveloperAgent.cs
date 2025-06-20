@@ -63,12 +63,26 @@ internal class DeveloperAgent
     public async ValueTask<EstimationModel?> ValidateEstimatesAsync(ChatHistory history, CancellationToken cancel)
     {
         await _userInteraction.WriteAssistantMessageAsync(RoleName, "Validating estimations ...", cancel);
+        foreach (var message in history)
+        {
+            if (message.Content is null || message.Role == AuthorRole.System) continue;
+            await _userInteraction.WriteAssistantMessageAsync(
+                assistant: RoleName,
+                message: $"Analyzing *{message.Content}*",
+                logLevel: LogLevel.Debug,
+                cancel: cancel);
+        }
         var result = await _chatCompletion.GetChatMessageContentAsync(
             history,
             executionSettings: _executionSettings,
             kernel: _kernel,
             cancellationToken: cancel);
         await _userInteraction.WriteAssistantMessageAsync(RoleName, "Estimation validation complete", cancel);
+        await _userInteraction.WriteAssistantMessageAsync(
+            assistant: RoleName,
+            message: $"Validated estimations *{result.Content}*",
+            logLevel: LogLevel.Debug,
+            cancel: cancel);
         if (result.Content is null) return null;
         history.AddAssistantMessage(result.Content);
         try
