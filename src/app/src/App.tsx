@@ -3,6 +3,7 @@ import { Message, LogLevel } from "./types";
 import Header from "./components/layout/Header";
 import MessageList from "./components/chat/MessageList";
 import ChatInput from "./components/chat/ChatInput";
+import DebugToggle from "./components/chat/DebugToggle";
 import SignalRService from "./services/SignalRService";
 import ApiService from "./services/ApiService";
 import "./App.css";
@@ -13,6 +14,7 @@ export default function App() {
   const [isUploading, setIsUploading] = useState(false);
   const [fileInputLocation, setFileInputLocation] = useState<string | undefined>(undefined);
   const [signalrConnectionId, setSignalrConnectionId] = useState<string | undefined>("");
+  const [showDebugMessages, setShowDebugMessages] = useState(false);
   const signalRServiceRef = useRef<SignalRService>(new SignalRService());
 
   useEffect(() => {
@@ -69,7 +71,11 @@ export default function App() {
   return (
     <div className="app-container">
       <Header />
-      <MessageList messages={messages} />
+      <MessageList messages={messages} showDebugMessages={showDebugMessages} />
+      <DebugToggle 
+        showDebugMessages={showDebugMessages}
+        onDebugToggle={setShowDebugMessages}
+      />
       <ChatInput
         isLoading={isLoading}
         isUploading={isUploading}
