@@ -1,11 +1,15 @@
-﻿using Microsoft.SemanticKernel.Agents;
-using Microsoft.SemanticKernel.ChatCompletion;
+﻿using Microsoft.SemanticKernel;
+using Microsoft.SemanticKernel.Agents;
+using Microsoft.SemanticKernel.Agents.Orchestration.Sequential;
+using Microsoft.SemanticKernel.Agents.Runtime.InProcess;
 using ProjectEstimate.Domain;
 using ProjectEstimate.Repositories.Agents.Analyst;
 using ProjectEstimate.Repositories.Agents.Architect;
 using ProjectEstimate.Repositories.Agents.Developer;
 using ProjectEstimate.Repositories.Documents;
 using ProjectEstimate.Repositories.Hubs;
+
+#pragma warning disable SKEXP0110
 
 #pragma warning disable SKEXP0001
 
@@ -19,6 +23,7 @@ internal class ConsultantAgent
     private readonly Agent _developerAgent;
     private readonly IUserInteraction _userInteraction;
     private readonly IDocumentRepository _documentRepository;
+    private readonly ILoggerFactory _loggerFactory;
 
     public ConsultantAgent(
         [FromKeyedServices(AnalystAgentFactory.AgentName)]
@@ -28,13 +33,15 @@ internal class ConsultantAgent
         [FromKeyedServices(DeveloperAgentFactory.AgentName)]
         Agent developerAgent,
         IUserInteraction userInteraction,
-        IDocumentRepository documentRepository)
+        IDocumentRepository documentRepository,
+        ILoggerFactory loggerFactory)
     {
         _analystAgent = analystAgent;
         _architectAgent = architectAgent;
         _developerAgent = developerAgent;
         _userInteraction = userInteraction;
         _documentRepository = documentRepository;
+        _loggerFactory = loggerFactory;
     }
 
     /// <summary>
@@ -47,7 +54,7 @@ internal class ConsultantAgent
         string? userInput = request.Prompt;
         string? fileInput = await _documentRepository.ReadDocumentAsync(request.FileLocation, cancellationToken);
         // TODO: get history from repository
-        ChatHistory history = [];
+        // ChatHistory history = [];
         var userMessage =
             $"""
              User prompt:
@@ -55,46 +62,28 @@ internal class ConsultantAgent
              Additional context:
              \"\"\"{fileInput}\"\"\"
              """;
-        history.AddUserMessage(userMessage);
-        ChatHistoryAgentThread agentThread = new(history);
-        AgentInvokeOptions invokeOptions = new()
+
+        async ValueTask ResponseCallback(ChatMessageContent message)
         {
-            OnIntermediateMessage = async message =>
-            {
-                string assistant = message.AuthorName ?? message.Role.Label;
-                string content = message.Content?.Trim() ?? string.Empty;
-                await _userInteraction.WriteAssistantMessageAsync(
-                    assistant,
-                    content,
-                    logLevel: LogLevel.Debug,
-                    cancel: cancellationToken);
-            }
+            string assistant = message.AuthorName ?? message.Role.Label;
+            string content = message.Content?.Trim() ?? string.Empty;
+            await _userInteraction.WriteAssistantMessageAsync(
+                assistant,
+                content,
+                logLevel: LogLevel.Debug,
+                cancel: cancellationToken);
+        }
+
+        SequentialOrchestration orchestration = new(_analystAgent, _architectAgent, _developerAgent)
+        {
+            LoggerFactory = _loggerFactory, ResponseCallback = ResponseCallback
         };
-        await foreach (var item in _analystAgent.InvokeAsync(
-                           thread: agentThread,
-                           options: invokeOptions,
-                           cancellationToken: cancellationToken))
-        {
-            string? message = item.Message.Content;
-            if (message is not null) history.AddAssistantMessage(message);
-        }
-        await foreach (var item in _architectAgent.InvokeAsync(
-                           thread: agentThread,
-                           options: invokeOptions,
-                           cancellationToken: cancellationToken))
-        {
-            string? message = item.Message.Content;
-            if (message is not null) history.AddAssistantMessage(message);
-        }
-        await foreach (var item in _developerAgent.InvokeAsync(
-                           thread: agentThread,
-                           options: invokeOptions,
-                           cancellationToken: cancellationToken))
-        {
-            string? message = item.Message.Content;
-            if (message is not null) history.AddAssistantMessage(message);
-        }
-        return history.Last().Content;
+        InProcessRuntime runtime = new();
+        await runtime.StartAsync(cancellationToken);
+        var result = await orchestration.InvokeAsync(userMessage, runtime, cancellationToken);
+        string output = await result.GetValueAsync(cancellationToken: cancellationToken);
+        await runtime.RunUntilIdleAsync();
+        return output;
     }
 
     public async ValueTask<string?> UploadFileAsync(UserFile file, CancellationToken cancel)
