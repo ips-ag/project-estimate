@@ -15,7 +15,7 @@ internal class AnalystAgent
     private readonly IUserInteraction _userInteraction;
 
     public AnalystAgent(
-        [FromKeyedServices("AnalystAgent")] Kernel kernel,
+        Kernel kernel,
         IChatCompletionService chatCompletion,
         IUserInteraction userInteraction)
     {

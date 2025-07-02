@@ -19,7 +19,7 @@ internal class ArchitectAgent
     private readonly IUserInteraction _userInteraction;
 
     public ArchitectAgent(
-        [FromKeyedServices("ArchitectAgent")] Kernel kernel,
+        Kernel kernel,
         IChatCompletionService chatCompletion,
         IUserInteraction userInteraction)
     {

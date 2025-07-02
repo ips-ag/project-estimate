@@ -19,7 +19,7 @@ internal class DeveloperAgent
     private readonly IUserInteraction _userInteraction;
 
     public DeveloperAgent(
-        [FromKeyedServices("DeveloperAgent")] Kernel kernel,
+        Kernel kernel,
         IChatCompletionService chatCompletion,
         IUserInteraction userInteraction)
     {

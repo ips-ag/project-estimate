@@ -1,7 +1,9 @@
 ﻿using Microsoft.Extensions.Options;
 using Microsoft.SemanticKernel;
+using Microsoft.SemanticKernel.Agents;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.AzureOpenAI;
+using Microsoft.SemanticKernel.TextGeneration;
 using ProjectEstimate.Repositories.Agents.Analyst;
 using ProjectEstimate.Repositories.Agents.Architect;
 using ProjectEstimate.Repositories.Agents.Consultant;
@@ -33,7 +35,7 @@ public static class RepositoryExtensions
             .ValidateOnStart();
 
         // agents
-        services.AddSingleton<IChatCompletionService>(sp =>
+        Func<IServiceProvider, AzureOpenAIChatCompletionService> azureOpenAiFactory = sp =>
         {
             var options = sp.GetRequiredService<IOptions<AzureOpenAiSettings>>().Value;
             var loggerFactory = sp.GetRequiredService<ILoggerFactory>();
@@ -42,15 +44,43 @@ public static class RepositoryExtensions
                 options.Endpoint,
                 options.ApiKey,
                 loggerFactory: loggerFactory);
-        });
-        services.AddKeyedTransient<Kernel>("ConsultantAgent", (sp, _) => new Kernel(sp));
+        };
+        services.AddScoped<IChatCompletionService>(azureOpenAiFactory);
+        services.AddScoped<ITextGenerationService>(azureOpenAiFactory);
+        services.AddTransient<Kernel>(sp => new Kernel(sp));
+        //// consultant
         services.AddScoped<ConsultantAgent>();
-        services.AddKeyedTransient<Kernel>("AnalystAgent", (sp, _) => new Kernel(sp));
-        services.AddScoped<AnalystAgent>();
-        services.AddKeyedTransient<Kernel>("ArchitectAgent", (sp, _) => new Kernel(sp));
-        services.AddScoped<ArchitectAgent>();
-        services.AddKeyedTransient<Kernel>("DeveloperAgent", (sp, _) => new Kernel(sp));
-        services.AddScoped<DeveloperAgent>();
+        //// analyst
+        // services.AddScoped<AnalystAgent>();
+        services.AddScoped<AnalystAgentFactory>();
+        services.AddKeyedScoped<Agent>(
+            AnalystAgentFactory.AgentName,
+            (sp, _) =>
+            {
+                var factory = sp.GetRequiredService<AnalystAgentFactory>();
+                return factory.Create();
+            });
+        //// architect
+        services.AddScoped<ArchitectAgentFactory>();
+        services.AddKeyedScoped<Agent>(
+            ArchitectAgentFactory.AgentName,
+            (sp, _) =>
+            {
+                var factory = sp.GetRequiredService<ArchitectAgentFactory>();
+                return factory.Create();
+            });
+        // services.AddScoped<ArchitectAgent>();
+
+        //// developer
+        services.AddScoped<DeveloperAgentFactory>();
+        services.AddKeyedScoped<Agent>(
+            DeveloperAgentFactory.AgentName,
+            (sp, _) =>
+            {
+                var factory = sp.GetRequiredService<DeveloperAgentFactory>();
+                return factory.Create();
+            });
+        // services.AddScoped<DeveloperAgent>();
 
         // interaction
         services.AddSingleton<IUserInteraction, SignalrUserInteraction>();
