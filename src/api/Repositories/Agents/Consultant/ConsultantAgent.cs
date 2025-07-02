@@ -7,6 +7,8 @@ using ProjectEstimate.Repositories.Agents.Developer;
 using ProjectEstimate.Repositories.Documents;
 using ProjectEstimate.Repositories.Hubs;
 
+#pragma warning disable SKEXP0001
+
 namespace ProjectEstimate.Repositories.Agents.Consultant;
 
 internal class ConsultantAgent
@@ -55,49 +57,38 @@ internal class ConsultantAgent
              """;
         history.AddUserMessage(userMessage);
         ChatHistoryAgentThread agentThread = new(history);
-        foreach (var message in history)
+        AgentInvokeOptions invokeOptions = new()
         {
-            if (message.Content is null || message.Role == AuthorRole.System) continue;
-            await _userInteraction.WriteAssistantMessageAsync(
-                assistant: RoleName,
-                message: $"➜ **Analyst** Sending message *{message.Content}*",
-                logLevel: LogLevel.Debug,
-                cancel: cancellationToken);
-        }
+            OnIntermediateMessage = async message =>
+            {
+                string assistant = message.AuthorName ?? message.Role.Label;
+                string content = message.Content?.Trim() ?? string.Empty;
+                await _userInteraction.WriteAssistantMessageAsync(
+                    assistant,
+                    content,
+                    logLevel: LogLevel.Debug,
+                    cancel: cancellationToken);
+            }
+        };
         await foreach (var item in _analystAgent.InvokeAsync(
                            thread: agentThread,
+                           options: invokeOptions,
                            cancellationToken: cancellationToken))
         {
             string? message = item.Message.Content;
             if (message is not null) history.AddAssistantMessage(message);
-        }
-        foreach (var message in history)
-        {
-            if (message.Content is null || message.Role == AuthorRole.System) continue;
-            await _userInteraction.WriteAssistantMessageAsync(
-                assistant: RoleName,
-                message: $"➜ **Architect** Sending message *{message.Content}*",
-                logLevel: LogLevel.Debug,
-                cancel: cancellationToken);
         }
         await foreach (var item in _architectAgent.InvokeAsync(
                            thread: agentThread,
+                           options: invokeOptions,
                            cancellationToken: cancellationToken))
         {
             string? message = item.Message.Content;
             if (message is not null) history.AddAssistantMessage(message);
         }
-        foreach (var message in history)
-        {
-            if (message.Content is null || message.Role == AuthorRole.System) continue;
-            await _userInteraction.WriteAssistantMessageAsync(
-                assistant: RoleName,
-                message: $"➜ **Developer** Sending message *{message.Content}*",
-                logLevel: LogLevel.Debug,
-                cancel: cancellationToken);
-        }
         await foreach (var item in _developerAgent.InvokeAsync(
                            thread: agentThread,
+                           options: invokeOptions,
                            cancellationToken: cancellationToken))
         {
             string? message = item.Message.Content;
