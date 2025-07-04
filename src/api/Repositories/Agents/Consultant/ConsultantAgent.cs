@@ -54,7 +54,7 @@ internal class ConsultantAgent
         string? userInput = request.Prompt;
         string? fileInput = await _documentRepository.ReadDocumentAsync(request.FileLocation, cancellationToken);
         // TODO: get history from repository
-        // ChatHistory history = [];
+        ChatHistory history = [];
         var userMessage =
             $"""
              User prompt:
@@ -67,24 +67,28 @@ internal class ConsultantAgent
         {
             string assistant = message.AuthorName ?? message.Role.Label;
             string content = message.Content?.Trim() ?? string.Empty;
+            var logLevel = LogLevel.Debug;
+            if (AnalystAgentFactory.AgentName == assistant) logLevel = LogLevel.Information;
             await _userInteraction.WriteAssistantMessageAsync(
                 assistant,
                 content,
-                logLevel: LogLevel.Debug,
+                logLevel: logLevel,
                 cancel: cancellationToken);
+            history.Add(message);
         }
 
-        AgentGroupChatManager chatManager = new()
+        AgentGroupChatManager chatManager = new(history)
         {
             InteractiveCallback = async () =>
             {
                 // simulate user input
-                string assistant = AnalystAgentFactory.AgentName;
+                string assistant = AuthorRole.User.Label;
+                assistant = char.ToUpper(assistant[0]) + assistant[1..];
                 var content = "1000 total and 10 concurrent users";
                 await _userInteraction.WriteAssistantMessageAsync(
                     assistant,
                     content,
-                    logLevel: LogLevel.Debug,
+                    logLevel: LogLevel.Information,
                     cancel: cancellationToken);
                 ChatMessageContent input = new(role: AuthorRole.User, content: content)
                 {
