@@ -22,6 +22,7 @@ internal class ArchitectAgentFactory : IAgentFactory
             Name = AgentName,
             Description =
                 "Architect agent for creating use-cases, breaking them into tasks, and estimating task delivery effort.",
+            Metadata = new AgentMetadata { Authors = [AgentName] },
             Instructions =
                 """
                 Assistant is an experienced software architects. It estimates effort needed for project delivery, based on requirements.

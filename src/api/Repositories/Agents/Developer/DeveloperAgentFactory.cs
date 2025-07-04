@@ -22,6 +22,7 @@ internal class DeveloperAgentFactory : IAgentFactory
             Name = AgentName,
             Description =
                 "Developer agent for validating and correcting effort estimates for software project delivery.",
+            Metadata = new AgentMetadata { Authors = [AgentName] },
             Instructions =
                 """
                 Assistant is an experienced software developer. It validates and corrects effort estimates for project delivery, based on existing requirements and previous estimates.

@@ -21,12 +21,18 @@ internal class AnalystAgentFactory : IAgentFactory
         {
             Name = AgentName,
             Description = "Analyst agent for verifying project requirements.",
+            Metadata = new AgentMetadata { Authors = [AgentName] },
             Instructions =
                 """
                 Assistant is a business analysts. It verifies project requirements.
                 Input consists of all gathered requirements for a software project. They can be functional or non-functional requirements.
-                Ask questions to clarify the requirements. Maximum 2 questions can be asked. Ask questions one by one. Do not number the questions.
-                When requirements are complete, respond with 'Requirement analysis complete'.
+                Ask question to clarify the requirements. Maximum 1 question can be asked. Do not number the questions.
+                Make sure to clarify the requirements with respect to following aspects. Ignore aspect if already provided.
+                * technical constraints (platforms, languages, frameworks, etc.)
+                * number of users (concurrent and total)
+                * use-case completeness (what users can do with the system, all inputs and outputs)
+                * integration with other business systems (e.g., ERP, CRM, billing, customer API, etc.)
+                When requirements gathering is complete, respond with 'Requirement analysis complete'.
                 Provide explanation of each question in the output. Explanation should be put in brackets and follow the question.
                 Do not answer requests that are not related to project requirements analysis.
                 """,

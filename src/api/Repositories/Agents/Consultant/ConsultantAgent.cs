@@ -1,7 +1,8 @@
 ﻿using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Agents;
-using Microsoft.SemanticKernel.Agents.Orchestration.Sequential;
+using Microsoft.SemanticKernel.Agents.Orchestration.GroupChat;
 using Microsoft.SemanticKernel.Agents.Runtime.InProcess;
+using Microsoft.SemanticKernel.ChatCompletion;
 using ProjectEstimate.Domain;
 using ProjectEstimate.Repositories.Agents.Analyst;
 using ProjectEstimate.Repositories.Agents.Architect;
@@ -17,7 +18,6 @@ namespace ProjectEstimate.Repositories.Agents.Consultant;
 
 internal class ConsultantAgent
 {
-    private const string RoleName = "Consultant";
     private readonly Agent _analystAgent;
     private readonly Agent _architectAgent;
     private readonly Agent _developerAgent;
@@ -74,7 +74,26 @@ internal class ConsultantAgent
                 cancel: cancellationToken);
         }
 
-        SequentialOrchestration orchestration = new(_analystAgent, _architectAgent, _developerAgent)
+        AgentGroupChatManager chatManager = new()
+        {
+            InteractiveCallback = async () =>
+            {
+                // simulate user input
+                string assistant = AnalystAgentFactory.AgentName;
+                var content = "1000 total and 10 concurrent users";
+                await _userInteraction.WriteAssistantMessageAsync(
+                    assistant,
+                    content,
+                    logLevel: LogLevel.Debug,
+                    cancel: cancellationToken);
+                ChatMessageContent input = new(role: AuthorRole.User, content: content)
+                {
+                    AuthorName = AuthorRole.User.Label
+                };
+                return input;
+            }
+        };
+        GroupChatOrchestration orchestration = new(chatManager, _analystAgent, _architectAgent, _developerAgent)
         {
             LoggerFactory = _loggerFactory, ResponseCallback = ResponseCallback
         };
