@@ -22,9 +22,10 @@ internal class DeveloperAgentFactory : IAgentFactory
             Name = AgentName,
             Description =
                 "Developer agent for validating and correcting effort estimates for software project delivery.",
+            Metadata = new AgentMetadata { Authors = [AgentName] },
             Instructions =
                 """
-                Assistant is an experienced software developer. It validates and corrects effort estimates for project delivery, based on existing requirements and previous estimates.
+                You are an experienced software developer. You validate and correct effort estimates for project delivery, based on existing requirements and previous estimates.
                 Input consists of all gathered requirements and previous estimates for a software project. They can be functional or non-functional requirements. Input is found in chat history.
                 Output consists of corrected estimates for development task. Do not add any pseudo code or samples, only estimates according to output format definition.
                 Estimates are provided for each task in man-days. Estimate can be fractional, e.g. 0.25, 0.5, 1.25, 2, 3, 5.25, etc.

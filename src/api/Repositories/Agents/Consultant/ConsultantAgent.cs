@@ -1,7 +1,8 @@
 ﻿using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Agents;
-using Microsoft.SemanticKernel.Agents.Orchestration.Sequential;
+using Microsoft.SemanticKernel.Agents.Orchestration.GroupChat;
 using Microsoft.SemanticKernel.Agents.Runtime.InProcess;
+using Microsoft.SemanticKernel.ChatCompletion;
 using ProjectEstimate.Domain;
 using ProjectEstimate.Repositories.Agents.Analyst;
 using ProjectEstimate.Repositories.Agents.Architect;
@@ -17,7 +18,6 @@ namespace ProjectEstimate.Repositories.Agents.Consultant;
 
 internal class ConsultantAgent
 {
-    private const string RoleName = "Consultant";
     private readonly Agent _analystAgent;
     private readonly Agent _architectAgent;
     private readonly Agent _developerAgent;
@@ -54,7 +54,7 @@ internal class ConsultantAgent
         string? userInput = request.Prompt;
         string? fileInput = await _documentRepository.ReadDocumentAsync(request.FileLocation, cancellationToken);
         // TODO: get history from repository
-        // ChatHistory history = [];
+        ChatHistory history = [];
         var userMessage =
             $"""
              User prompt:
@@ -67,14 +67,37 @@ internal class ConsultantAgent
         {
             string assistant = message.AuthorName ?? message.Role.Label;
             string content = message.Content?.Trim() ?? string.Empty;
+            var logLevel = LogLevel.Debug;
+            if (AnalystAgentFactory.AgentName == assistant) logLevel = LogLevel.Information;
             await _userInteraction.WriteAssistantMessageAsync(
                 assistant,
                 content,
-                logLevel: LogLevel.Debug,
+                logLevel: logLevel,
                 cancel: cancellationToken);
+            history.Add(message);
         }
 
-        SequentialOrchestration orchestration = new(_analystAgent, _architectAgent, _developerAgent)
+        AgentGroupChatManager chatManager = new(history)
+        {
+            InteractiveCallback = async () =>
+            {
+                // simulate user input
+                string assistant = AuthorRole.User.Label;
+                assistant = char.ToUpper(assistant[0]) + assistant[1..];
+                var content = "1000 total and 10 concurrent users";
+                await _userInteraction.WriteAssistantMessageAsync(
+                    assistant,
+                    content,
+                    logLevel: LogLevel.Information,
+                    cancel: cancellationToken);
+                ChatMessageContent input = new(role: AuthorRole.User, content: content)
+                {
+                    AuthorName = AuthorRole.User.Label
+                };
+                return input;
+            }
+        };
+        GroupChatOrchestration orchestration = new(chatManager, _analystAgent, _architectAgent, _developerAgent)
         {
             LoggerFactory = _loggerFactory, ResponseCallback = ResponseCallback
         };
