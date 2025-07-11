@@ -7,4 +7,6 @@ internal interface IUserInteraction
         string message,
         CancellationToken cancel,
         LogLevel logLevel = LogLevel.Information);
+
+    ValueTask<string?> AskQuestionAsync(string assistant, string question, CancellationToken cancel);
 }

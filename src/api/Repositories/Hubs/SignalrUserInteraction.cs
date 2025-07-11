@@ -28,9 +28,19 @@ internal class SignalrUserInteraction : IUserInteraction
     {
         string? connectionId = _requestContextAccessor.Context?.ConnectionId;
         if (connectionId is null) return;
-        await _hubContext.Clients.Client(connectionId).ReceiveMessage(
-            assistant,
-            message,
-            _logLevelConverter.ToModel(logLevel));
+        var logLevelModel = _logLevelConverter.ToModel(logLevel);
+        await _hubContext.Clients.Client(connectionId)
+            .ReceiveMessage(assistant, message, logLevelModel)
+            .WaitAsync(cancel);
+    }
+
+    public async ValueTask<string?> AskQuestionAsync(string assistant, string question, CancellationToken cancel)
+    {
+        string? connectionId = _requestContextAccessor.Context?.ConnectionId;
+        if (connectionId is null) return null;
+        string? answer = await _hubContext.Clients.Client(connectionId)
+            .AskQuestion(assistant, question)
+            .WaitAsync(cancel);
+        return answer;
     }
 }

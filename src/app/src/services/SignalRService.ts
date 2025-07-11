@@ -24,6 +24,9 @@ export default class SignalRService {
     this.messageHandler = onMessageReceived;
     this.connectionIdCallback = onConnectionIdReceived;
 
+    this.connection.on("askQuestion", async (assistant: string, question: string) => {
+      return "Doesn't matter";
+    });
     this.connection.on("receiveMessage", (assistant: string, message: string, logLevel: LogLevel = LogLevel.Info) => {
       this.messageHandler(assistant, message, logLevel);
     });
