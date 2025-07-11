@@ -81,16 +81,19 @@ internal class ConsultantAgent
         {
             InteractiveCallback = async () =>
             {
-                // simulate user input
                 string assistant = AuthorRole.User.Label;
                 assistant = char.ToUpper(assistant[0]) + assistant[1..];
-                var content = "1000 total and 10 concurrent users";
-                await _userInteraction.WriteAssistantMessageAsync(
-                    assistant,
-                    content,
-                    logLevel: LogLevel.Information,
-                    cancel: cancellationToken);
-                ChatMessageContent input = new(role: AuthorRole.User, content: content)
+                // question is the last message in the history
+                string? question = history.LastOrDefault()?.Content;
+                string? answer = null;
+                if (question is not null)
+                {
+                    answer = await _userInteraction.AskQuestionAsync(
+                        assistant,
+                        question,
+                        cancel: cancellationToken);
+                }
+                ChatMessageContent input = new(role: AuthorRole.User, content: answer)
                 {
                     AuthorName = AuthorRole.User.Label
                 };
