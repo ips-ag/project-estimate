@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Message, LogLevel } from "./types";
+import { Message, MessageTypeModel } from "./types";
 import Header from "./components/layout/Header";
 import MessageList from "./components/chat/MessageList";
 import ChatInput from "./components/chat/ChatInput";
@@ -14,12 +14,12 @@ export default function App() {
   const [isUploading, setIsUploading] = useState(false);
   const [fileInputLocation, setFileInputLocation] = useState<string | undefined>(undefined);
   const [signalrConnectionId, setSignalrConnectionId] = useState<string | undefined>("");
-  const [showDebugMessages, setShowDebugMessages] = useState(false);
+  const [showReasoningMessages, setShowReasoningMessages] = useState(false);
   const signalRServiceRef = useRef<SignalRService>(new SignalRService());
 
   useEffect(() => {
-    const handleMessageReceived = (assistant: string, message: string, logLevel: LogLevel = LogLevel.Info) => {
-      setMessages((prevMessages) => [...prevMessages, { sender: assistant, text: message, logLevel }]);
+    const handleMessageReceived = (assistant: string, message: string, type: MessageTypeModel, final: boolean) => {
+      setMessages((prevMessages) => [...prevMessages, { sender: assistant, text: message, type: type, final: final }]);
     };
 
     const handleConnectionIdReceived = (connectionId: string) => {
@@ -47,7 +47,10 @@ export default function App() {
   };
   const handleSendMessage = async (message: string) => {
     if (!message.trim() && !fileInputLocation) return;
-    setMessages((prevMessages) => [...prevMessages, { sender: "User", text: message, logLevel: LogLevel.Info }]);
+    setMessages((prevMessages) => [
+      ...prevMessages,
+      { sender: "User", text: message, type: MessageTypeModel.Message, final: false },
+    ]);
     try {
       const request = {
         connectionId: signalrConnectionId,
@@ -59,7 +62,10 @@ export default function App() {
       setFileInputLocation(undefined);
       if (data.output !== undefined) {
         const assistantMessage: string = data.output;
-        setMessages((prevMessages) => [...prevMessages, { sender: "Assistant", text: assistantMessage, logLevel: LogLevel.Info }]);
+        setMessages((prevMessages) => [
+          ...prevMessages,
+          { sender: "Assistant", text: assistantMessage, type: MessageTypeModel.Message, final: true },
+        ]);
       }
     } catch (error) {
       console.error("Error during conversation:", error);
@@ -71,11 +77,8 @@ export default function App() {
   return (
     <div className="app-container">
       <Header />
-      <MessageList messages={messages} showDebugMessages={showDebugMessages} />
-      <DebugToggle 
-        showDebugMessages={showDebugMessages}
-        onDebugToggle={setShowDebugMessages}
-      />
+      <MessageList messages={messages} showReasoningMessages={showReasoningMessages} />
+      <DebugToggle showDebugMessages={showReasoningMessages} onDebugToggle={setShowReasoningMessages} />
       <ChatInput
         isLoading={isLoading}
         isUploading={isUploading}

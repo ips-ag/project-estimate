@@ -24,7 +24,7 @@ internal class AnalystAgentFactory : IAgentFactory
             Metadata = new AgentMetadata { Authors = [AgentName] },
             Instructions =
                 """
-                You are an experiences business analysts. You analyze and verify project requirements.
+                You are an experienced business analysts. You analyze and verify project requirements.
                 Input consists of all gathered requirements for a software project. They can be functional or non-functional requirements.
                 You can ask questions to clarify the requirements.
                 Only ask one question per conversation round. In total, ask maximum of 3 questions. Do not number the questions.

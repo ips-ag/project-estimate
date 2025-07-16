@@ -1,16 +1,14 @@
-export enum LogLevel {
-  Trace = 0,
-  Debug = 1,
-  Info = 2,
-  Warning = 3,
-  Error = 4,
-  Critical = 5
+export enum MessageTypeModel {
+  Message = 0,
+  Question = 1,
+  Reasoning = 2
 }
 
 export type Message = {
   sender: string;
   text: string;
-  logLevel?: LogLevel;
+  type: MessageTypeModel;
+  final: boolean;
 };
 
 export type ConversationRequest = {

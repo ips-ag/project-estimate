@@ -1,10 +1,11 @@
 import * as signalR from "@microsoft/signalr";
 import { config } from "../config/config";
-import { LogLevel } from "../types";
+import { MessageTypeModel } from "../types";
 
 export default class SignalRService {
   private connection: signalR.HubConnection;
-  private messageHandler: (assistant: string, message: string, logLevel: LogLevel) => void = () => {};
+  private messageHandler: (assistant: string, message: string, type: MessageTypeModel, final: boolean) => void =
+    () => {};
   private connectionIdCallback: (connectionId: string) => void = () => {};
   private isInitialized = false;
 
@@ -16,7 +17,7 @@ export default class SignalRService {
   }
 
   public initialize(
-    onMessageReceived: (assistant: string, message: string, logLevel: LogLevel) => void,
+    onMessageReceived: (assistant: string, message: string, type: MessageTypeModel, final: boolean) => void,
     onConnectionIdReceived: (connectionId: string) => void
   ): void {
     if (this.isInitialized) return;
@@ -25,11 +26,15 @@ export default class SignalRService {
     this.connectionIdCallback = onConnectionIdReceived;
 
     this.connection.on("askQuestion", async (assistant: string, question: string) => {
-      return "Doesn't matter";
+      let response = assistant + ": " + question;
+      return "Doesn't matter" + response;
     });
-    this.connection.on("receiveMessage", (assistant: string, message: string, logLevel: LogLevel = LogLevel.Info) => {
-      this.messageHandler(assistant, message, logLevel);
-    });
+    this.connection.on(
+      "receiveMessage",
+      (assistant: string, message: string, type: MessageTypeModel, final: boolean) => {
+        return this.messageHandler(assistant, message, type, final);
+      }
+    );
 
     this.connection
       .start()

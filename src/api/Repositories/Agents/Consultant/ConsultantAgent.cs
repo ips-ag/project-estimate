@@ -67,13 +67,22 @@ internal class ConsultantAgent
         {
             string assistant = message.AuthorName ?? message.Role.Label;
             string content = message.Content?.Trim() ?? string.Empty;
-            var logLevel = LogLevel.Debug;
-            if (AnalystAgentFactory.AgentName == assistant) logLevel = LogLevel.Information;
-            await _userInteraction.WriteAssistantMessageAsync(
-                assistant,
-                content,
-                logLevel: logLevel,
-                cancel: cancellationToken);
+            bool isReasoning = AnalystAgentFactory.AgentName != assistant;
+            if (isReasoning)
+            {
+                await _userInteraction.ReasoningOutputAsync(
+                    assistant: assistant,
+                    message: content,
+                    cancel: cancellationToken);
+            }
+            else
+            {
+                await _userInteraction.MessageOutputAsync(
+                    assistant: assistant,
+                    message: content,
+                    conversationEnd: false,
+                    cancel: cancellationToken);
+            }
             history.Add(message);
         }
 
@@ -89,8 +98,8 @@ internal class ConsultantAgent
                 if (question is not null)
                 {
                     answer = await _userInteraction.AskQuestionAsync(
-                        assistant,
-                        question,
+                        assistant: assistant,
+                        question: question,
                         cancel: cancellationToken);
                 }
                 ChatMessageContent input = new(role: AuthorRole.User, content: answer)

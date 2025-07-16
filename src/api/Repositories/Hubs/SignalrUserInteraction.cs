@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.SignalR;
 using ProjectEstimate.Application.Request.Context;
-using ProjectEstimate.Repositories.Hubs.Converters;
+using ProjectEstimate.Repositories.Hubs.Models;
 
 namespace ProjectEstimate.Repositories.Hubs;
 
@@ -8,29 +8,34 @@ internal class SignalrUserInteraction : IUserInteraction
 {
     private readonly IHubContext<ChatHub, IChatClient> _hubContext;
     private readonly IRequestContextAccessor _requestContextAccessor;
-    private readonly LogLevelConverter _logLevelConverter;
 
     public SignalrUserInteraction(
         IHubContext<ChatHub, IChatClient> hubContext,
-        IRequestContextAccessor requestContextAccessor,
-        LogLevelConverter logLevelConverter)
+        IRequestContextAccessor requestContextAccessor)
     {
         _hubContext = hubContext;
         _requestContextAccessor = requestContextAccessor;
-        _logLevelConverter = logLevelConverter;
     }
 
-    public async ValueTask WriteAssistantMessageAsync(
+    public async ValueTask MessageOutputAsync(
         string assistant,
         string message,
-        CancellationToken cancel,
-        LogLevel logLevel = LogLevel.Information)
+        bool conversationEnd = false,
+        CancellationToken cancel = default)
     {
         string? connectionId = _requestContextAccessor.Context?.ConnectionId;
         if (connectionId is null) return;
-        var logLevelModel = _logLevelConverter.ToModel(logLevel);
         await _hubContext.Clients.Client(connectionId)
-            .ReceiveMessage(assistant, message, logLevelModel)
+            .ReceiveMessage(assistant, message, MessageTypeModel.Message, conversationEnd)
+            .WaitAsync(cancel);
+    }
+
+    public async ValueTask ReasoningOutputAsync(string assistant, string message, CancellationToken cancel = default)
+    {
+        string? connectionId = _requestContextAccessor.Context?.ConnectionId;
+        if (connectionId is null) return;
+        await _hubContext.Clients.Client(connectionId)
+            .ReceiveMessage(assistant, message, MessageTypeModel.Reasoning, false)
             .WaitAsync(cancel);
     }
 

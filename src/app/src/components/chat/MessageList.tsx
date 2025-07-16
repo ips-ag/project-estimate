@@ -1,18 +1,17 @@
 import React from "react";
 import MessageItem from "./MessageItem";
-import { Message, LogLevel } from "../../types";
+import { Message, MessageTypeModel } from "../../types";
 import "./MessageList.css";
 
 type MessageListProps = {
   messages: Message[];
-  showDebugMessages: boolean;
+  showReasoningMessages: boolean;
 };
 
-export default function MessageList({ messages, showDebugMessages }: MessageListProps) {
+export default function MessageList({ messages, showReasoningMessages }: MessageListProps) {
   const filteredMessages = messages.filter((message) => {
-    if (showDebugMessages) return true;
-    const logLevel = message.logLevel ?? LogLevel.Info;
-    return logLevel > LogLevel.Debug;
+    if (showReasoningMessages) return true;
+    return message.type !== MessageTypeModel.Reasoning;
   });
 
   return (

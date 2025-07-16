@@ -2,12 +2,12 @@
   margin: 0.5rem 0;
 }
 
-.message-debug {
+.message-reasoning {
   opacity: 0.75;
   color: #6b7280;
   font-size: 0.95em;
 }
 
-.message-debug strong {
+.message-reasoning strong {
   color: #9ca3af;
 }
