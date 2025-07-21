@@ -39,12 +39,12 @@ internal class SignalrUserInteraction : IUserInteraction
             .WaitAsync(cancel);
     }
 
-    public async ValueTask<string?> AskQuestionAsync(string assistant, string question, CancellationToken cancel)
+    public async ValueTask<string?> GetAnswerAsync(CancellationToken cancel)
     {
         string? connectionId = _requestContextAccessor.Context?.ConnectionId;
         if (connectionId is null) return null;
         string? answer = await _hubContext.Clients.Client(connectionId)
-            .AskQuestion(assistant, question)
+            .GetUserInput()
             .WaitAsync(cancel);
         return answer;
     }

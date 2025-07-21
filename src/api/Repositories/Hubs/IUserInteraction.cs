@@ -29,11 +29,9 @@ internal interface IUserInteraction
         CancellationToken cancel = default);
 
     /// <summary>
-    ///     Asks a question to the user and waits for an answer.
+    ///     Waits for an answer from a user.
     /// </summary>
-    /// <param name="assistant">Name of the assistant asking the question</param>
-    /// <param name="question">Question content</param>
     /// <param name="cancel">Cancellation token</param>
     /// <returns>Non-empty string if answer was provided. Empty or null value otherwise</returns>
-    ValueTask<string?> AskQuestionAsync(string assistant, string question, CancellationToken cancel = default);
+    ValueTask<string?> GetAnswerAsync(CancellationToken cancel = default);
 }

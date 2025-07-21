@@ -4,9 +4,6 @@ import { MessageTypeModel } from "../types";
 
 export default class SignalRService {
   private connection: signalR.HubConnection;
-  private messageHandler: (assistant: string, message: string, type: MessageTypeModel, final: boolean) => void =
-    () => {};
-  private connectionIdCallback: (connectionId: string) => void = () => {};
   private isInitialized = false;
 
   constructor() {
@@ -18,23 +15,25 @@ export default class SignalRService {
 
   public initialize(
     onMessageReceived: (assistant: string, message: string, type: MessageTypeModel, final: boolean) => void,
+    onUserInputRequested: () => string | null,
     onConnectionIdReceived: (connectionId: string) => void
   ): void {
     if (this.isInitialized) return;
 
     this.messageHandler = onMessageReceived;
+    this.userInputHandler = onUserInputRequested;
     this.connectionIdCallback = onConnectionIdReceived;
 
-    this.connection.on("askQuestion", async (assistant: string, question: string) => {
-      let response = assistant + ": " + question;
-      return "Doesn't matter" + response;
-    });
     this.connection.on(
       "receiveMessage",
       (assistant: string, message: string, type: MessageTypeModel, final: boolean) => {
-        return this.messageHandler(assistant, message, type, final);
+        this.messageHandler(assistant, message, type, final);
       }
     );
+
+    this.connection.on("getUserInput", () => {
+      return this.userInputHandler();
+    });
 
     this.connection
       .start()
@@ -62,4 +61,11 @@ export default class SignalRService {
   public getConnectionId(): string | null {
     return this.connection.connectionId;
   }
+
+  private messageHandler: (assistant: string, message: string, type: MessageTypeModel, final: boolean) => void =
+    () => {};
+
+  private userInputHandler: () => string | null = () => null;
+
+  private connectionIdCallback: (connectionId: string) => void = () => {};
 }

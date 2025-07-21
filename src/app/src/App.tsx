@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Message, MessageTypeModel } from "./types";
 import Header from "./components/layout/Header";
 import MessageList from "./components/chat/MessageList";
@@ -18,15 +18,33 @@ export default function App() {
   const signalRServiceRef = useRef<SignalRService>(new SignalRService());
 
   useEffect(() => {
-    const handleMessageReceived = (assistant: string, message: string, type: MessageTypeModel, final: boolean) => {
+    const handleMessageReceived = (
+      assistant: string,
+      message: string,
+      type: MessageTypeModel,
+      final: boolean
+    ): void => {
       setMessages((prevMessages) => [...prevMessages, { sender: assistant, text: message, type: type, final: final }]);
+    };
+
+    const handleUserInputRequested = (): string | null => {
+      // TODO: Request user input for questions
+      let response = "Doesn't matter";
+      let userMessage: Message = {
+        sender: "User",
+        text: response,
+        type: MessageTypeModel.Message,
+        final: false,
+      };
+      setMessages((prevMessages) => [...prevMessages, userMessage]);
+      return response;
     };
 
     const handleConnectionIdReceived = (connectionId: string) => {
       setSignalrConnectionId(connectionId);
     };
 
-    signalRServiceRef.current.initialize(handleMessageReceived, handleConnectionIdReceived);
+    signalRServiceRef.current.initialize(handleMessageReceived, handleUserInputRequested, handleConnectionIdReceived);
   }, []);
 
   const handleFileUpload = async (file: File) => {

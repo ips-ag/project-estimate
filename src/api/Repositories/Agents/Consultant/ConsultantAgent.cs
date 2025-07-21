@@ -67,6 +67,7 @@ internal class ConsultantAgent
         {
             string assistant = message.AuthorName ?? message.Role.Label;
             string content = message.Content?.Trim() ?? string.Empty;
+            // TODO: Developer messages are not reasoning messages, and should be treated as end of conversation.
             bool isReasoning = AnalystAgentFactory.AgentName != assistant;
             if (isReasoning)
             {
@@ -90,17 +91,12 @@ internal class ConsultantAgent
         {
             InteractiveCallback = async () =>
             {
-                string assistant = AuthorRole.User.Label;
-                assistant = char.ToUpper(assistant[0]) + assistant[1..];
-                // question is the last message in the history
-                string? question = history.LastOrDefault()?.Content;
+                var lastMessage = history.LastOrDefault();
+                string? question = lastMessage?.Content;
                 string? answer = null;
                 if (question is not null)
                 {
-                    answer = await _userInteraction.AskQuestionAsync(
-                        assistant: assistant,
-                        question: question,
-                        cancel: cancellationToken);
+                    answer = await _userInteraction.GetAnswerAsync(cancel: cancellationToken);
                 }
                 ChatMessageContent input = new(role: AuthorRole.User, content: answer)
                 {
