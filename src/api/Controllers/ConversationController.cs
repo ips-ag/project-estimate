@@ -1,8 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System.Threading.Channels;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
 using ProjectEstimate.Application.Models;
-using ProjectEstimate.Application.Request.Context;
-using ProjectEstimate.Domain;
-using ProjectEstimate.Repositories.Agents.Consultant;
 
 namespace ProjectEstimate.Controllers;
 
@@ -10,24 +9,26 @@ namespace ProjectEstimate.Controllers;
 [ApiController]
 public class ConversationController : ControllerBase
 {
-    private readonly ConsultantAgent _agent;
-    private readonly IRequestContextAccessor _contextAccessor;
+    private readonly ProblemDetailsFactory _problemDetailsFactory;
+    private readonly Channel<ChatCompletionRequestModel> _workQueue;
 
-    public ConversationController(IServiceProvider services, IRequestContextAccessor contextAccessor)
+    public ConversationController(
+        ProblemDetailsFactory problemDetailsFactory,
+        Channel<ChatCompletionRequestModel> workQueue)
     {
-        _agent = services.GetRequiredService<ConsultantAgent>();
-        _contextAccessor = contextAccessor;
+        _problemDetailsFactory = problemDetailsFactory;
+        _workQueue = workQueue;
     }
 
     [HttpPost("", Name = nameof(CompleteConversation))]
     [ProducesResponseType(typeof(ChatCompletionResponseModel), 200)]
-    public async Task<ChatCompletionResponseModel> CompleteConversation(
-        [FromBody] ChatCompletionRequestModel requestModel,
-        CancellationToken cancel)
+    public IActionResult CompleteConversation([FromBody] ChatCompletionRequestModel requestModel)
     {
-        _contextAccessor.Context = new RequestContext(requestModel.ConnectionId);
-        var request = new ChatCompletionRequest(requestModel.Input, requestModel.FileInput);
-        string? response = await _agent.ExecuteAsync(request, cancel);
-        return new ChatCompletionResponseModel { Output = response };
+        if (!_workQueue.Writer.TryWrite(requestModel))
+        {
+            return Problem(statusCode: StatusCodes.Status503ServiceUnavailable);
+        }
+        var responseModel = new ChatCompletionResponseModel { Output = string.Empty };
+        return Ok(responseModel);
     }
 }
