@@ -36,7 +36,6 @@ public class AgentGroupChatManager : GroupChatManager
         CancellationToken cancellationToken = new())
     {
         GroupChatManagerResult<string> result;
-        // if last message was from a user, choose analyst as next agent
         var lastMessage = history.LastOrDefault();
         if (lastMessage is not null)
         {
@@ -72,15 +71,11 @@ public class AgentGroupChatManager : GroupChatManager
             result = new GroupChatManagerResult<bool>(false) { Reason = "Conversation not started." };
             return ValueTask.FromResult(result);
         }
-        string lastAuthor = lastMessage.AuthorName ?? lastMessage.Role.Label;
-        if (AnalystAgentFactory.AgentName == lastAuthor || AuthorRole.Assistant.Label == lastAuthor)
+        string lastMessageContent = lastMessage.Content?.Trim() ?? string.Empty;
+        if (lastMessageContent.EndsWith('?'))
         {
-            string lastMessageContent = lastMessage.Content?.Trim() ?? string.Empty;
-            if (!"Requirement analysis complete.".Equals(lastMessageContent, StringComparison.OrdinalIgnoreCase))
-            {
-                result = new GroupChatManagerResult<bool>(true) { Reason = "Question asked by analyst." };
-                return ValueTask.FromResult(result);
-            }
+            result = new GroupChatManagerResult<bool>(true) { Reason = "Last message is a question." };
+            return ValueTask.FromResult(result);
         }
         result = new GroupChatManagerResult<bool>(false) { Reason = "User input was not requested." };
         return ValueTask.FromResult(result);
