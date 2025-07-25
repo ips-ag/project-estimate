@@ -5,12 +5,12 @@ import "./MessageList.css";
 
 type MessageListProps = {
   messages: Message[];
-  showReasoningMessages: boolean;
+  showReasoning: boolean;
 };
 
-export default function MessageList({ messages, showReasoningMessages }: MessageListProps) {
+export default function MessageList({ messages, showReasoning }: MessageListProps) {
   const filteredMessages = messages.filter((message) => {
-    if (showReasoningMessages) return true;
+    if (showReasoning) return true;
     return message.type !== MessageTypeModel.Reasoning;
   });
 

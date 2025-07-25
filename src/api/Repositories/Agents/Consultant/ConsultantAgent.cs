@@ -65,9 +65,18 @@ internal class ConsultantAgent
 
         async ValueTask ResponseCallback(ChatMessageContent message)
         {
+            history.Add(message);
             string assistant = message.AuthorName ?? message.Role.Label;
             string content = message.Content?.Trim() ?? string.Empty;
-            // TODO: Developer messages are not reasoning messages, and should be treated as end of conversation.
+            if (DeveloperAgentFactory.AgentName == assistant)
+            {
+                await _userInteraction.MessageOutputAsync(
+                    assistant: assistant,
+                    message: content,
+                    conversationEnd: true,
+                    cancel: cancellationToken);
+                return;
+            }
             bool isReasoning = AnalystAgentFactory.AgentName != assistant;
             if (isReasoning)
             {
@@ -84,27 +93,25 @@ internal class ConsultantAgent
                     conversationEnd: false,
                     cancel: cancellationToken);
             }
-            history.Add(message);
         }
 
-        AgentGroupChatManager chatManager = new(history)
+        async ValueTask<ChatMessageContent> InteractiveCallback()
         {
-            InteractiveCallback = async () =>
+            var lastMessage = history.LastOrDefault();
+            string? question = lastMessage?.Content;
+            string? answer = null;
+            if (question is not null)
             {
-                var lastMessage = history.LastOrDefault();
-                string? question = lastMessage?.Content;
-                string? answer = null;
-                if (question is not null)
-                {
-                    answer = await _userInteraction.GetAnswerAsync(cancel: cancellationToken);
-                }
-                ChatMessageContent input = new(role: AuthorRole.User, content: answer)
-                {
-                    AuthorName = AuthorRole.User.Label
-                };
-                return input;
+                answer = await _userInteraction.GetAnswerAsync(cancel: cancellationToken);
             }
-        };
+            ChatMessageContent input = new(role: AuthorRole.User, content: answer)
+            {
+                AuthorName = AuthorRole.User.Label
+            };
+            return input;
+        }
+
+        AgentGroupChatManager chatManager = new(history) { InteractiveCallback = InteractiveCallback };
         GroupChatOrchestration orchestration = new(chatManager, _analystAgent, _architectAgent, _developerAgent)
         {
             LoggerFactory = _loggerFactory, ResponseCallback = ResponseCallback

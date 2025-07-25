@@ -3,7 +3,7 @@ import { Message, MessageTypeModel } from "./types";
 import Header from "./components/layout/Header";
 import MessageList from "./components/chat/MessageList";
 import ChatInput from "./components/chat/ChatInput";
-import DebugToggle from "./components/chat/DebugToggle";
+import ReasoningToggle from "./components/chat/ReasoningToggle";
 import SignalRService from "./services/SignalRService";
 import ApiService from "./services/ApiService";
 import "./App.css";
@@ -14,7 +14,7 @@ export default function App() {
   const [isUploading, setIsUploading] = useState(false);
   const [fileInputLocation, setFileInputLocation] = useState<string | undefined>(undefined);
   const [signalrConnectionId, setSignalrConnectionId] = useState<string | undefined>("");
-  const [showReasoningMessages, setShowReasoningMessages] = useState(false);
+  const [showReasoning, setShowReasoning] = useState(false);
   const signalRServiceRef = useRef<SignalRService>(new SignalRService());
 
   useEffect(() => {
@@ -95,8 +95,8 @@ export default function App() {
   return (
     <div className="app-container">
       <Header />
-      <MessageList messages={messages} showReasoningMessages={showReasoningMessages} />
-      <DebugToggle showDebugMessages={showReasoningMessages} onDebugToggle={setShowReasoningMessages} />
+      <MessageList messages={messages} showReasoning={showReasoning} />
+      <ReasoningToggle showReasoning={showReasoning} onReasoningToggle={setShowReasoning} />
       <ChatInput
         isLoading={isLoading}
         isUploading={isUploading}
