@@ -9,11 +9,19 @@ type ChatInputProps = {
   isLoading: boolean;
   isUploading: boolean;
   hasInputFile: boolean;
+  isWaitingForUserInput?: boolean;
   onFileSelected: (file: File) => void;
   onSend: (message: string) => void;
 };
 
-export default function ChatInput({ isLoading, isUploading, hasInputFile, onFileSelected, onSend }: ChatInputProps) {
+export default function ChatInput({
+  isLoading,
+  isUploading,
+  hasInputFile,
+  isWaitingForUserInput = false,
+  onFileSelected,
+  onSend,
+}: ChatInputProps) {
   const [userInput, setUserInput] = useState("");
 
   const handleUserInputChange = (input: string) => {
@@ -35,12 +43,14 @@ export default function ChatInput({ isLoading, isUploading, hasInputFile, onFile
 
   return (
     <div className="chat-form">
-      <FileSelect
-        onFileSelected={onFileSelected}
-        isUploading={isUploading}
-        isDisabled={isUploading || isLoading}
-        hasUploadedFile={hasInputFile}
-      />
+      {!isWaitingForUserInput && !isLoading && (
+        <FileSelect
+          onFileSelected={onFileSelected}
+          isUploading={isUploading}
+          isDisabled={isUploading || isLoading}
+          hasUploadedFile={hasInputFile}
+        />
+      )}
 
       <textarea
         id="userInput"
@@ -49,7 +59,9 @@ export default function ChatInput({ isLoading, isUploading, hasInputFile, onFile
         value={userInput}
         onChange={(e) => handleUserInputChange(e.target.value)}
         onKeyDown={handleKeyDown}
-        placeholder="Enter requirements or select a file..."
+        placeholder={
+          isWaitingForUserInput ? "Please answer the question above..." : "Enter requirements or select a file..."
+        }
       />
 
       <button
