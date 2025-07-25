@@ -15,6 +15,7 @@ try
     builder.Host.UseSerilog((context, configuration) =>
         configuration.ReadFrom.Configuration(context.Configuration));
     builder.Services.AddControllers();
+    builder.Services.AddProblemDetails();
     builder.Services.AddOpenApi();
     builder.Services.AddApplicationInsightsTelemetry();
     builder.Services.AddSignalR();

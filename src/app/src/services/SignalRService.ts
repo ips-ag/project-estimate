@@ -1,12 +1,13 @@
 import * as signalR from "@microsoft/signalr";
 import { config } from "../config/config";
-import { LogLevel } from "../types";
+import { MessageTypeModel } from "../types";
 
 export default class SignalRService {
   private connection: signalR.HubConnection;
-  private messageHandler: (assistant: string, message: string, logLevel: LogLevel) => void = () => {};
-  private connectionIdCallback: (connectionId: string) => void = () => {};
   private isInitialized = false;
+  private userInputResolver: ((value: string) => void) | null = null;
+  private userInputPromise: Promise<string> | null = null;
+  private userInputTimeout: NodeJS.Timeout | null = null;
 
   constructor() {
     this.connection = new signalR.HubConnectionBuilder()
@@ -16,16 +17,45 @@ export default class SignalRService {
   }
 
   public initialize(
-    onMessageReceived: (assistant: string, message: string, logLevel: LogLevel) => void,
-    onConnectionIdReceived: (connectionId: string) => void
+    onMessageReceived: (assistant: string, message: string, type: MessageTypeModel, final: boolean) => void,
+    onUserInputRequested: () => void,
+    onConnectionIdReceived: (connectionId: string) => void,
+    onUserInputTimeout?: () => void
   ): void {
     if (this.isInitialized) return;
 
     this.messageHandler = onMessageReceived;
+    this.userInputRequestHandler = onUserInputRequested;
     this.connectionIdCallback = onConnectionIdReceived;
+    this.userInputTimeoutHandler = onUserInputTimeout || (() => {});
 
-    this.connection.on("receiveMessage", (assistant: string, message: string, logLevel: LogLevel = LogLevel.Info) => {
-      this.messageHandler(assistant, message, logLevel);
+    this.connection.on(
+      "receiveMessage",
+      (assistant: string, message: string, type: MessageTypeModel, final: boolean) => {
+        this.messageHandler(assistant, message, type, final);
+      }
+    );
+
+    this.connection.on("getUserInput", async (): Promise<string | null> => {
+      this.userInputPromise = new Promise<string>((resolve) => {
+        this.userInputResolver = resolve;
+      });
+      this.userInputTimeout = setTimeout(() => {
+        if (this.userInputResolver) {
+          this.userInputTimeoutHandler(); // Notify UI about timeout
+          this.userInputResolver("No answer provided");
+          this.userInputResolver = null;
+          this.userInputPromise = null;
+          this.userInputTimeout = null;
+        }
+      }, 30000);
+      this.userInputRequestHandler();
+      try {
+        return await this.userInputPromise;
+      } catch (error) {
+        console.error("Error getting user input:", error);
+        return null;
+      }
     });
 
     this.connection
@@ -54,4 +84,25 @@ export default class SignalRService {
   public getConnectionId(): string | null {
     return this.connection.connectionId;
   }
+
+  public provideUserInput(input: string): void {
+    if (this.userInputResolver) {
+      if (this.userInputTimeout) {
+        clearTimeout(this.userInputTimeout);
+        this.userInputTimeout = null;
+      }
+      this.userInputResolver(input);
+      this.userInputResolver = null;
+      this.userInputPromise = null;
+    }
+  }
+
+  private messageHandler: (assistant: string, message: string, type: MessageTypeModel, final: boolean) => void =
+    () => {};
+
+  private userInputRequestHandler: () => void = () => {};
+
+  private userInputTimeoutHandler: () => void = () => {};
+
+  private connectionIdCallback: (connectionId: string) => void = () => {};
 }

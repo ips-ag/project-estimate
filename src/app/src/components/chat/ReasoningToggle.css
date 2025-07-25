@@ -1,11 +1,11 @@
-.debug-toggle {
+.reasoning-toggle {
   width: 70%;
   margin: 0.4rem 0rem 0rem 0rem;
   display: flex;
   justify-content: flex-start;
 }
 
-.debug-toggle-label {
+.reasoning-toggle-label {
   display: flex;
   align-items: center;
   cursor: pointer;
@@ -14,11 +14,11 @@
   user-select: none;
 }
 
-.debug-toggle-checkbox {
+.reasoning-toggle-checkbox {
   margin-right: 0.4rem;
   accent-color: #3b82f6;
 }
 
-.debug-toggle-text {
+.reasoning-toggle-text {
   white-space: nowrap;
 }

@@ -1,7 +1,8 @@
 ﻿using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Agents;
-using Microsoft.SemanticKernel.Agents.Orchestration.Sequential;
+using Microsoft.SemanticKernel.Agents.Orchestration.GroupChat;
 using Microsoft.SemanticKernel.Agents.Runtime.InProcess;
+using Microsoft.SemanticKernel.ChatCompletion;
 using ProjectEstimate.Domain;
 using ProjectEstimate.Repositories.Agents.Analyst;
 using ProjectEstimate.Repositories.Agents.Architect;
@@ -17,7 +18,6 @@ namespace ProjectEstimate.Repositories.Agents.Consultant;
 
 internal class ConsultantAgent
 {
-    private const string RoleName = "Consultant";
     private readonly Agent _analystAgent;
     private readonly Agent _architectAgent;
     private readonly Agent _developerAgent;
@@ -54,7 +54,7 @@ internal class ConsultantAgent
         string? userInput = request.Prompt;
         string? fileInput = await _documentRepository.ReadDocumentAsync(request.FileLocation, cancellationToken);
         // TODO: get history from repository
-        // ChatHistory history = [];
+        ChatHistory history = [];
         var userMessage =
             $"""
              User prompt:
@@ -65,16 +65,54 @@ internal class ConsultantAgent
 
         async ValueTask ResponseCallback(ChatMessageContent message)
         {
+            history.Add(message);
             string assistant = message.AuthorName ?? message.Role.Label;
             string content = message.Content?.Trim() ?? string.Empty;
-            await _userInteraction.WriteAssistantMessageAsync(
-                assistant,
-                content,
-                logLevel: LogLevel.Debug,
-                cancel: cancellationToken);
+            if (DeveloperAgentFactory.AgentName == assistant)
+            {
+                await _userInteraction.MessageOutputAsync(
+                    assistant: assistant,
+                    message: content,
+                    conversationEnd: true,
+                    cancel: cancellationToken);
+                return;
+            }
+            bool isReasoning = AnalystAgentFactory.AgentName != assistant;
+            if (isReasoning)
+            {
+                await _userInteraction.ReasoningOutputAsync(
+                    assistant: assistant,
+                    message: content,
+                    cancel: cancellationToken);
+            }
+            else
+            {
+                await _userInteraction.MessageOutputAsync(
+                    assistant: assistant,
+                    message: content,
+                    conversationEnd: false,
+                    cancel: cancellationToken);
+            }
         }
 
-        SequentialOrchestration orchestration = new(_analystAgent, _architectAgent, _developerAgent)
+        async ValueTask<ChatMessageContent> InteractiveCallback()
+        {
+            var lastMessage = history.LastOrDefault();
+            string? question = lastMessage?.Content;
+            string? answer = null;
+            if (question is not null)
+            {
+                answer = await _userInteraction.GetAnswerAsync(cancel: cancellationToken);
+            }
+            ChatMessageContent input = new(role: AuthorRole.User, content: answer)
+            {
+                AuthorName = AuthorRole.User.Label
+            };
+            return input;
+        }
+
+        AgentGroupChatManager chatManager = new(history) { InteractiveCallback = InteractiveCallback };
+        GroupChatOrchestration orchestration = new(chatManager, _analystAgent, _architectAgent, _developerAgent)
         {
             LoggerFactory = _loggerFactory, ResponseCallback = ResponseCallback
         };
