@@ -14,9 +14,16 @@ export default function App() {
   const [isUploading, setIsUploading] = useState(false);
   const [fileInputLocation, setFileInputLocation] = useState<string | undefined>(undefined);
   const [signalrConnectionId, setSignalrConnectionId] = useState<string | undefined>("");
-  const [showReasoning, setShowReasoning] = useState(false);
+  const [showReasoning, setShowReasoning] = useState(() => {
+    const saved = localStorage.getItem("showReasoning");
+    return saved === "true";
+  });
   const [isWaitingForUserInput, setIsWaitingForUserInput] = useState(false);
   const signalRServiceRef = useRef<SignalRService>(new SignalRService());
+
+  useEffect(() => {
+    localStorage.setItem("showReasoning", showReasoning ? "true" : "false");
+  }, [showReasoning]);
 
   useEffect(() => {
     const handleMessageReceived = (
