@@ -16,6 +16,9 @@ param clientAffinityEnabled bool = false
 @description('Optional. Allow only HTTPS traffic.')
 param httpsOnly bool = true
 
+@description('Optional. Enable Always On. Defaults to true.')
+param alwaysOn bool = true
+
 @allowed([
   'app,linux'
   'app,linux,container'
@@ -31,6 +34,9 @@ resource webApp 'Microsoft.Web/sites@2024-04-01' = {
     serverFarmId: appServicePlanId
     clientAffinityEnabled: clientAffinityEnabled
     httpsOnly: httpsOnly
+    siteConfig: {
+      alwaysOn: alwaysOn
+    }
   }
   kind: kind
 }
