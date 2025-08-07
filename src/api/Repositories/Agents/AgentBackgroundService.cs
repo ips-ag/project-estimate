@@ -1,10 +1,10 @@
 using System.Threading.Channels;
-using ProjectEstimate.Application.Models;
 using ProjectEstimate.Application.Request.Context;
 using ProjectEstimate.Domain;
 using ProjectEstimate.Repositories.Agents.Consultant;
+using ProjectEstimate.Repositories.Hubs.Models;
 
-namespace ProjectEstimate.Application.Agents;
+namespace ProjectEstimate.Repositories.Agents;
 
 public class AgentBackgroundService : BackgroundService
 {
@@ -34,7 +34,7 @@ public class AgentBackgroundService : BackgroundService
                 var contextAccessor = scope.ServiceProvider.GetRequiredService<IRequestContextAccessor>();
                 contextAccessor.Context = new RequestContext(requestModel.ConnectionId);
                 var agent = scope.ServiceProvider.GetRequiredService<ConsultantAgent>();
-                var request = new ChatCompletionRequest(requestModel.Input, requestModel.FileInput);
+                var request = new ChatCompletionRequest(requestModel.Prompt, requestModel.FileLocation);
                 await agent.ExecuteAsync(request, stoppingToken);
                 _logger.LogDebug("Agent work item completed successfully");
             }

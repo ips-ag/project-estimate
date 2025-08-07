@@ -1,9 +1,11 @@
-﻿using Microsoft.Extensions.Options;
+﻿using System.Threading.Channels;
+using Microsoft.Extensions.Options;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Agents;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.AzureOpenAI;
 using Microsoft.SemanticKernel.TextGeneration;
+using ProjectEstimate.Repositories.Agents;
 using ProjectEstimate.Repositories.Agents.Analyst;
 using ProjectEstimate.Repositories.Agents.Architect;
 using ProjectEstimate.Repositories.Agents.Consultant;
@@ -12,6 +14,7 @@ using ProjectEstimate.Repositories.Configuration;
 using ProjectEstimate.Repositories.Documents;
 using ProjectEstimate.Repositories.Documents.Converters;
 using ProjectEstimate.Repositories.Hubs;
+using ProjectEstimate.Repositories.Hubs.Models;
 
 namespace ProjectEstimate.Repositories.Extensions;
 
@@ -34,6 +37,15 @@ public static class RepositoryExtensions
             .ValidateOnStart();
 
         // agents
+        services.AddSingleton(_ =>
+        {
+            var options = new BoundedChannelOptions(100)
+            {
+                FullMode = BoundedChannelFullMode.Wait, SingleReader = true, SingleWriter = false
+            };
+            return Channel.CreateBounded<ChatCompletionRequestModel>(options);
+        });
+        services.AddHostedService<AgentBackgroundService>();
         Func<IServiceProvider, AzureOpenAIChatCompletionService> azureOpenAiFactory = sp =>
         {
             var options = sp.GetRequiredService<IOptions<AzureOpenAiSettings>>().Value;
@@ -50,7 +62,6 @@ public static class RepositoryExtensions
         //// consultant
         services.AddScoped<ConsultantAgent>();
         //// analyst
-        // services.AddScoped<AnalystAgent>();
         services.AddScoped<AnalystAgentFactory>();
         services.AddKeyedScoped<Agent>(
             AnalystAgentFactory.AgentName,
@@ -68,8 +79,6 @@ public static class RepositoryExtensions
                 var factory = sp.GetRequiredService<ArchitectAgentFactory>();
                 return factory.Create();
             });
-        // services.AddScoped<ArchitectAgent>();
-
         //// developer
         services.AddScoped<DeveloperAgentFactory>();
         services.AddKeyedScoped<Agent>(
@@ -79,7 +88,6 @@ public static class RepositoryExtensions
                 var factory = sp.GetRequiredService<DeveloperAgentFactory>();
                 return factory.Create();
             });
-        // services.AddScoped<DeveloperAgent>();
 
         // interaction
         services.AddSingleton<IUserInteraction, SignalrUserInteraction>();

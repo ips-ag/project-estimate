@@ -4,6 +4,7 @@ import Header from "./components/layout/Header";
 import MessageList from "./components/chat/MessageList";
 import ChatInput from "./components/chat/ChatInput";
 import ReasoningToggle from "./components/chat/ReasoningToggle";
+import ConnectionStatus from "./components/chat/ConnectionStatus";
 import SignalRService from "./services/SignalRService";
 import ApiService from "./services/ApiService";
 import "./App.css";
@@ -12,14 +13,27 @@ export default function App() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const [fileInputLocation, setFileInputLocation] = useState<string | undefined>(undefined);
-  const [signalrConnectionId, setSignalrConnectionId] = useState<string | undefined>("");
+  const [fileInputLocation, setFileInputLocation] = useState<string | null>(null);
+  const [isSignalRConnected, setIsSignalRConnected] = useState(false);
   const [showReasoning, setShowReasoning] = useState(() => {
     const saved = localStorage.getItem("showReasoning");
     return saved === "true";
   });
   const [isWaitingForUserInput, setIsWaitingForUserInput] = useState(false);
   const signalRServiceRef = useRef<SignalRService>(new SignalRService());
+
+  const focusUserInput = (delay: number = 0): void => {
+    setTimeout(() => {
+      const inputElement = document.getElementById("userInput") as HTMLTextAreaElement;
+      if (inputElement) {
+        inputElement.focus();
+      }
+    }, delay);
+  };
+
+  useEffect(() => {
+    focusUserInput();
+  }, []);
 
   useEffect(() => {
     localStorage.setItem("showReasoning", showReasoning ? "true" : "false");
@@ -41,6 +55,7 @@ export default function App() {
     const handleUserInputRequested = (): void => {
       setIsLoading(false);
       setIsWaitingForUserInput(true);
+      focusUserInput(100);
     };
 
     const handleUserInputTimeout = (): void => {
@@ -52,14 +67,14 @@ export default function App() {
       setIsLoading(true);
     };
 
-    const handleConnectionIdReceived = (connectionId: string) => {
-      setSignalrConnectionId(connectionId);
+    const handleConnectionStateChanged = (isConnected: boolean): void => {
+      setIsSignalRConnected(isConnected);
     };
 
     signalRServiceRef.current.initialize(
       handleMessageReceived,
       handleUserInputRequested,
-      handleConnectionIdReceived,
+      handleConnectionStateChanged,
       handleUserInputTimeout
     );
   }, []);
@@ -67,7 +82,7 @@ export default function App() {
   const handleFileUpload = async (file: File) => {
     try {
       setIsUploading(true);
-      setFileInputLocation(undefined);
+      setFileInputLocation(null);
       const data = await ApiService.uploadFile(file);
       if (!data.errorMessage && data.location) {
         setFileInputLocation(data.location);
@@ -94,14 +109,10 @@ export default function App() {
         signalRServiceRef.current.provideUserInput(message);
         return;
       }
-      const request = {
-        connectionId: signalrConnectionId,
-        input: message,
-        fileInput: fileInputLocation,
-      };
+
       setIsLoading(true);
-      await ApiService.completeConversation(request);
-      setFileInputLocation(undefined);
+      await signalRServiceRef.current.sendMessage(message, fileInputLocation);
+      setFileInputLocation(null);
     } catch (error) {
       console.error("Error during conversation:", error);
       setIsLoading(false);
@@ -112,7 +123,10 @@ export default function App() {
     <div className="app-container">
       <Header />
       <MessageList messages={messages} showReasoning={showReasoning} />
-      <ReasoningToggle showReasoning={showReasoning} onReasoningToggle={setShowReasoning} />
+      <div className="action-bar">
+        <ReasoningToggle showReasoning={showReasoning} onReasoningToggle={setShowReasoning} />
+        <ConnectionStatus isConnected={isSignalRConnected} />
+      </div>
       <ChatInput
         isLoading={isLoading}
         isUploading={isUploading}
