@@ -4,6 +4,7 @@ import Header from "./components/layout/Header";
 import MessageList from "./components/chat/MessageList";
 import ChatInput from "./components/chat/ChatInput";
 import ReasoningToggle from "./components/chat/ReasoningToggle";
+import ConnectionStatus from "./components/chat/ConnectionStatus";
 import SignalRService from "./services/SignalRService";
 import ApiService from "./services/ApiService";
 import "./App.css";
@@ -13,6 +14,7 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [fileInputLocation, setFileInputLocation] = useState<string | null>(null);
+  const [isSignalRConnected, setIsSignalRConnected] = useState(false);
   const [showReasoning, setShowReasoning] = useState(() => {
     const saved = localStorage.getItem("showReasoning");
     return saved === "true";
@@ -51,9 +53,14 @@ export default function App() {
       setIsLoading(true);
     };
 
+    const handleConnectionStateChanged = (isConnected: boolean): void => {
+      setIsSignalRConnected(isConnected);
+    };
+
     signalRServiceRef.current.initialize(
       handleMessageReceived,
       handleUserInputRequested,
+      handleConnectionStateChanged,
       handleUserInputTimeout
     );
   }, []);
@@ -102,7 +109,10 @@ export default function App() {
     <div className="app-container">
       <Header />
       <MessageList messages={messages} showReasoning={showReasoning} />
-      <ReasoningToggle showReasoning={showReasoning} onReasoningToggle={setShowReasoning} />
+      <div className="action-bar">
+        <ReasoningToggle showReasoning={showReasoning} onReasoningToggle={setShowReasoning} />
+        <ConnectionStatus isConnected={isSignalRConnected} />
+      </div>
       <ChatInput
         isLoading={isLoading}
         isUploading={isUploading}

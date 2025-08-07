@@ -19,12 +19,14 @@ export default class SignalRService {
   public initialize(
     onMessageReceived: (assistant: string, message: string, type: MessageTypeModel, final: boolean) => void,
     onUserInputRequested: () => void,
+    onConnectionStateChanged?: (isConnected: boolean) => void,
     onUserInputTimeout?: () => void
   ): void {
     if (this.isInitialized) return;
 
     this.messageHandler = onMessageReceived;
     this.userInputRequestHandler = onUserInputRequested;
+    this.connectionStateChangedHandler = onConnectionStateChanged || (() => {});
     this.userInputTimeoutHandler = onUserInputTimeout || (() => {});
 
     this.connection.on(
@@ -61,16 +63,29 @@ export default class SignalRService {
       .then(() => {
         if (this.connection.connectionId) {
           console.log("Connected to SignalR with connection ID:", this.connection.connectionId);
+          this.connectionStateChangedHandler(true);
         }
       })
       .catch((err) => {
-        console.error("SignalR Connection Error:", err);
+        console.error("SignalR connection error:", err);
+        this.connectionStateChangedHandler(false);
       });
 
     this.connection.onreconnected((connectionId) => {
       if (connectionId) {
         console.log("Reconnected to SignalR with connection ID:", connectionId);
+        this.connectionStateChangedHandler(true);
       }
+    });
+
+    this.connection.onreconnecting((error) => {
+      console.warn("Reconnecting to SignalR:", error);
+      this.connectionStateChangedHandler(false);
+    });
+
+    this.connection.onclose(() => {
+      console.log("SignalR connection closed");
+      this.connectionStateChangedHandler(false);
     });
 
     this.isInitialized = true;
@@ -107,4 +122,6 @@ export default class SignalRService {
   private userInputRequestHandler: () => void = () => {};
 
   private userInputTimeoutHandler: () => void = () => {};
+
+  private connectionStateChangedHandler: (isConnected: boolean) => void = () => {};
 }
