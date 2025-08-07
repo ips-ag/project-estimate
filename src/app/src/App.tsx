@@ -22,6 +22,19 @@ export default function App() {
   const [isWaitingForUserInput, setIsWaitingForUserInput] = useState(false);
   const signalRServiceRef = useRef<SignalRService>(new SignalRService());
 
+  const focusUserInput = (delay: number = 0): void => {
+    setTimeout(() => {
+      const inputElement = document.getElementById("userInput") as HTMLTextAreaElement;
+      if (inputElement) {
+        inputElement.focus();
+      }
+    }, delay);
+  };
+
+  useEffect(() => {
+    focusUserInput();
+  }, []);
+
   useEffect(() => {
     localStorage.setItem("showReasoning", showReasoning ? "true" : "false");
   }, [showReasoning]);
@@ -42,6 +55,7 @@ export default function App() {
     const handleUserInputRequested = (): void => {
       setIsLoading(false);
       setIsWaitingForUserInput(true);
+      focusUserInput(100);
     };
 
     const handleUserInputTimeout = (): void => {
