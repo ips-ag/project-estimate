@@ -9,7 +9,7 @@ export default function ConnectionStatus({ isConnected }: ConnectionStatusProps)
     <div className="connection-status">
       <div
         className={`connection-indicator ${isConnected ? "connected" : "disconnected"}`}
-        title={isConnected ? "SignalR Connected" : "SignalR Disconnected"}
+        title={isConnected ? "Chat Connected" : "Chat Not Connected"}
       >
         <div className="connection-circle"></div>
       </div>
