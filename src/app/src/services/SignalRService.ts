@@ -19,14 +19,12 @@ export default class SignalRService {
   public initialize(
     onMessageReceived: (assistant: string, message: string, type: MessageTypeModel, final: boolean) => void,
     onUserInputRequested: () => void,
-    onConnectionIdReceived: (connectionId: string) => void,
     onUserInputTimeout?: () => void
   ): void {
     if (this.isInitialized) return;
 
     this.messageHandler = onMessageReceived;
     this.userInputRequestHandler = onUserInputRequested;
-    this.connectionIdCallback = onConnectionIdReceived;
     this.userInputTimeoutHandler = onUserInputTimeout || (() => {});
 
     this.connection.on(
@@ -42,7 +40,7 @@ export default class SignalRService {
       });
       this.userInputTimeout = setTimeout(() => {
         if (this.userInputResolver) {
-          this.userInputTimeoutHandler(); // Notify UI about timeout
+          this.userInputTimeoutHandler();
           this.userInputResolver("No answer provided");
           this.userInputResolver = null;
           this.userInputPromise = null;
@@ -63,7 +61,6 @@ export default class SignalRService {
       .then(() => {
         if (this.connection.connectionId) {
           console.log("Connected to SignalR with connection ID:", this.connection.connectionId);
-          this.connectionIdCallback(this.connection.connectionId);
         }
       })
       .catch((err) => {
@@ -72,17 +69,12 @@ export default class SignalRService {
 
     this.connection.onreconnected((connectionId) => {
       if (connectionId) {
-        this.connectionIdCallback(connectionId);
         console.log("Reconnected to SignalR with connection ID:", connectionId);
       }
     });
 
     this.isInitialized = true;
     console.log("SignalR service initialized");
-  }
-
-  public getConnectionId(): string | null {
-    return this.connection.connectionId;
   }
 
   public provideUserInput(input: string): void {
@@ -97,12 +89,22 @@ export default class SignalRService {
     }
   }
 
+  public async sendMessage(prompt: string | null, fileLocation: string | null): Promise<void> {
+    if (!this.connection || this.connection.state !== signalR.HubConnectionState.Connected) {
+      throw new Error("SignalR connection is not established.");
+    }
+    try {
+      await this.connection.invoke("sendMessage", prompt, fileLocation);
+    } catch (error) {
+      console.error("Error sending message via SignalR:", error);
+      throw error;
+    }
+  }
+
   private messageHandler: (assistant: string, message: string, type: MessageTypeModel, final: boolean) => void =
     () => {};
 
   private userInputRequestHandler: () => void = () => {};
 
   private userInputTimeoutHandler: () => void = () => {};
-
-  private connectionIdCallback: (connectionId: string) => void = () => {};
 }

@@ -1,5 +1,5 @@
 import { config } from "../config/config";
-import { ConversationRequest, ConversationResponse, FileUploadResponse } from "../types";
+import { FileUploadResponse } from "../types";
 
 export default class ApiService {
   public static async uploadFile(file: File): Promise<FileUploadResponse> {
@@ -16,22 +16,6 @@ export default class ApiService {
       return {
         location: "",
         errorMessage: "Failed to upload file",
-      };
-    }
-  }
-
-  public static async completeConversation(request: ConversationRequest): Promise<ConversationResponse> {
-    try {
-      const response = await fetch(config.apiUrl + "/conversation", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(request),
-      });
-      return await response.json();
-    } catch (error) {
-      console.error("Error sending conversation:", error);
-      return {
-        responseRequired: false,
       };
     }
   }

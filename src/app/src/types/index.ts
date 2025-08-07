@@ -10,17 +10,6 @@ export type Message = {
   final: boolean;
 };
 
-export type ConversationRequest = {
-  connectionId?: string;
-  input?: string;
-  fileInput?: string;
-};
-
-export type ConversationResponse = {
-  output?: string;
-  responseRequired: boolean;
-};
-
 export type FileUploadResponse = {
   location: string;
   errorMessage?: string;

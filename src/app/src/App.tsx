@@ -12,8 +12,7 @@ export default function App() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const [fileInputLocation, setFileInputLocation] = useState<string | undefined>(undefined);
-  const [signalrConnectionId, setSignalrConnectionId] = useState<string | undefined>("");
+  const [fileInputLocation, setFileInputLocation] = useState<string | null>(null);
   const [showReasoning, setShowReasoning] = useState(() => {
     const saved = localStorage.getItem("showReasoning");
     return saved === "true";
@@ -52,14 +51,9 @@ export default function App() {
       setIsLoading(true);
     };
 
-    const handleConnectionIdReceived = (connectionId: string) => {
-      setSignalrConnectionId(connectionId);
-    };
-
     signalRServiceRef.current.initialize(
       handleMessageReceived,
       handleUserInputRequested,
-      handleConnectionIdReceived,
       handleUserInputTimeout
     );
   }, []);
@@ -67,7 +61,7 @@ export default function App() {
   const handleFileUpload = async (file: File) => {
     try {
       setIsUploading(true);
-      setFileInputLocation(undefined);
+      setFileInputLocation(null);
       const data = await ApiService.uploadFile(file);
       if (!data.errorMessage && data.location) {
         setFileInputLocation(data.location);
@@ -94,14 +88,10 @@ export default function App() {
         signalRServiceRef.current.provideUserInput(message);
         return;
       }
-      const request = {
-        connectionId: signalrConnectionId,
-        input: message,
-        fileInput: fileInputLocation,
-      };
+
       setIsLoading(true);
-      await ApiService.completeConversation(request);
-      setFileInputLocation(undefined);
+      await signalRServiceRef.current.sendMessage(message, fileInputLocation);
+      setFileInputLocation(null);
     } catch (error) {
       console.error("Error during conversation:", error);
       setIsLoading(false);
