@@ -1,6 +1,6 @@
 import * as signalR from "@microsoft/signalr";
 import { config } from "../config/config";
-import { MessageTypeModel } from "../types";
+import { MessageTypeModel, ConnectionState } from "../types";
 
 export default class SignalRService {
   private connection: signalR.HubConnection;
@@ -19,7 +19,7 @@ export default class SignalRService {
   public initialize(
     onMessageReceived: (assistant: string, message: string, type: MessageTypeModel, final: boolean) => void,
     onUserInputRequested: () => void,
-    onConnectionStateChanged?: (isConnected: boolean) => void,
+    onConnectionStateChanged?: (status: ConnectionState) => void,
     onUserInputTimeout?: () => void
   ): void {
     if (this.isInitialized) return;
@@ -58,34 +58,34 @@ export default class SignalRService {
       }
     });
 
+    this.connectionStateChangedHandler(ConnectionState.Connecting);
+
     this.connection
       .start()
       .then(() => {
         if (this.connection.connectionId) {
           console.log("Connected to SignalR with connection ID:", this.connection.connectionId);
-          this.connectionStateChangedHandler(true);
+          this.connectionStateChangedHandler(ConnectionState.Connected);
         }
       })
       .catch((err) => {
         console.error("SignalR connection error:", err);
-        this.connectionStateChangedHandler(false);
+        this.connectionStateChangedHandler(ConnectionState.Disconnected);
       });
 
     this.connection.onreconnected((connectionId) => {
       if (connectionId) {
         console.log("Reconnected to SignalR with connection ID:", connectionId);
-        this.connectionStateChangedHandler(true);
+        this.connectionStateChangedHandler(ConnectionState.Connected);
       }
     });
 
     this.connection.onreconnecting((error) => {
-      console.warn("Reconnecting to SignalR:", error);
-      this.connectionStateChangedHandler(false);
+      this.connectionStateChangedHandler(ConnectionState.Connecting);
     });
 
     this.connection.onclose(() => {
-      console.log("SignalR connection closed");
-      this.connectionStateChangedHandler(false);
+      this.connectionStateChangedHandler(ConnectionState.Disconnected);
     });
 
     this.isInitialized = true;
@@ -123,5 +123,5 @@ export default class SignalRService {
 
   private userInputTimeoutHandler: () => void = () => {};
 
-  private connectionStateChangedHandler: (isConnected: boolean) => void = () => {};
+  private connectionStateChangedHandler: (status: ConnectionState) => void = () => {};
 }

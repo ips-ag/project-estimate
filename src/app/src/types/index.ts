@@ -3,6 +3,12 @@ export enum MessageTypeModel {
   Reasoning = 1
 }
 
+export enum ConnectionState {
+  Connected = 'connected',
+  Connecting = 'connecting',
+  Disconnected = 'disconnected'
+}
+
 export type Message = {
   sender: string;
   text: string;
