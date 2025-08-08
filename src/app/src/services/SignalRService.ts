@@ -80,7 +80,7 @@ export default class SignalRService {
       }
     });
 
-    this.connection.onreconnecting((error) => {
+    this.connection.onreconnecting(() => {
       this.connectionStateChangedHandler(ConnectionState.Connecting);
     });
 
