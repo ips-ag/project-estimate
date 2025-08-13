@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using ProjectEstimate.Application.Converters;
 using ProjectEstimate.Application.Models;
 using ProjectEstimate.Domain;
@@ -8,6 +9,7 @@ namespace ProjectEstimate.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
+[Authorize]
 public class FileController : ControllerBase
 {
     private readonly ConsultantAgent _agent;

@@ -1,4 +1,8 @@
 import { useEffect, useRef, useState } from "react";
+import { MsalProvider } from "@azure/msal-react";
+import { PublicClientApplication } from "@azure/msal-browser";
+import { msalConfig } from "./auth/authConfig";
+import { AuthGuard } from "./auth/AuthGuard";
 import { Message, MessageTypeModel, ConnectionState } from "./types";
 import Header from "./components/layout/Header";
 import MessageList from "./components/chat/MessageList";
@@ -9,7 +13,9 @@ import SignalRService from "./services/SignalRService";
 import ApiService from "./services/ApiService";
 import "./App.css";
 
-export default function App() {
+const msalInstance = new PublicClientApplication(msalConfig);
+
+function AppContent() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -120,21 +126,31 @@ export default function App() {
   };
 
   return (
-    <div className="app-container">
-      <Header />
-      <MessageList messages={messages} showReasoning={showReasoning} />
-      <div className="action-bar">
-        <ReasoningToggle showReasoning={showReasoning} onReasoningToggle={setShowReasoning} />
-        <ConnectionStatus status={connectionStatus} />
+    <AuthGuard>
+      <div className="app-container">
+        <Header />
+        <MessageList messages={messages} showReasoning={showReasoning} />
+        <div className="action-bar">
+          <ReasoningToggle showReasoning={showReasoning} onReasoningToggle={setShowReasoning} />
+          <ConnectionStatus status={connectionStatus} />
+        </div>
+        <ChatInput
+          isLoading={isLoading}
+          isUploading={isUploading}
+          hasInputFile={!!fileInputLocation}
+          isWaitingForUserInput={isWaitingForUserInput}
+          onFileSelected={handleFileUpload}
+          onSend={handleSendMessage}
+        />
       </div>
-      <ChatInput
-        isLoading={isLoading}
-        isUploading={isUploading}
-        hasInputFile={!!fileInputLocation}
-        isWaitingForUserInput={isWaitingForUserInput}
-        onFileSelected={handleFileUpload}
-        onSend={handleSendMessage}
-      />
-    </div>
+    </AuthGuard>
+  );
+}
+
+export default function App() {
+  return (
+    <MsalProvider instance={msalInstance}>
+      <AppContent />
+    </MsalProvider>
   );
 }
