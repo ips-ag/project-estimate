@@ -1,4 +1,4 @@
-import type { Configuration, PopupRequest } from "@azure/msal-browser";
+import { LogLevel, type Configuration, type PopupRequest } from "@azure/msal-browser";
 
 export const msalConfig: Configuration = {
   auth: {
@@ -19,24 +19,24 @@ export const msalConfig: Configuration = {
           return;
         }
         switch (level) {
-          case 0: // LogLevel.Error
+          case LogLevel.Error:
             console.error(message);
             return;
-          case 1: // LogLevel.Warning
+          case LogLevel.Warning:
             console.warn(message);
             return;
-          case 2: // LogLevel.Info
+          case LogLevel.Info:
             console.info(message);
             return;
-          case 3: // LogLevel.Verbose
+          case LogLevel.Verbose:
             console.debug(message);
             return;
         }
-      }
-    }
-  }
+      },
+    },
+  },
 };
 
 export const loginRequest: PopupRequest = {
-  scopes: ["openid", "profile", "email"]
+  scopes: ["openid", "profile", "email", `${import.meta.env.VITE_AZURE_CLIENT_ID}/ProjectEstimate`],
 };

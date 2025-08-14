@@ -14,7 +14,7 @@ export const getAccessToken = async (): Promise<string> => {
 
     const account = accounts[0];
     const tokenRequest: SilentRequest = {
-      scopes: ["openid", "profile", "email"],
+      scopes: ["openid", "profile", "email", `${import.meta.env.VITE_AZURE_CLIENT_ID}/ProjectEstimate`],
       account: account,
     };
 

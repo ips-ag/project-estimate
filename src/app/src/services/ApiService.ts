@@ -1,44 +1,15 @@
 import { config } from "../config/config";
 import { FileUploadResponse } from "../types";
+import { getAccessToken } from "../auth/tokenService";
 
 export default class ApiService {
-  private static async getAuthToken(): Promise<string | null> {
-    try {
-      // Import dynamically to avoid build errors when packages aren't installed yet
-      const { PublicClientApplication } = await import("@azure/msal-browser");
-      const { msalConfig } = await import("../auth/authConfig");
-      
-      const msalInstance = new PublicClientApplication(msalConfig);
-      await msalInstance.initialize();
-      
-      const accounts = msalInstance.getAllAccounts();
-      if (accounts.length === 0) {
-        console.error('No accounts found in MSAL');
-        return null;
-      }
-
-      const account = accounts[0];
-      const tokenRequest = {
-        scopes: ["openid", "profile", "email"],
-        account: account
-      };
-
-      const response = await msalInstance.acquireTokenSilent(tokenRequest);
-      console.log('Token acquired silently from MSAL');
-      return response.accessToken;
-    } catch (error) {
-      console.error('Error acquiring token from MSAL:', error);
-      return null;
-    }
-  }
-
   public static async uploadFile(file: File): Promise<FileUploadResponse> {
     try {
-      const token = await this.getAuthToken();
+      const token = await getAccessToken();
       const headers: HeadersInit = {};
-      
+
       if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
+        headers["Authorization"] = `Bearer ${token}`;
       }
 
       const formData = new FormData();
