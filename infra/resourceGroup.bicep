@@ -34,6 +34,9 @@ param documentIntelligenceName string = 'di-projectestimate-${env}'
 @description('Optional. The name of the UI App Service to create.')
 param uiWebAppName string = 'app-projectestimate-ui-${env}'
 
+@description('Optional. Custom command to start UI App Service.')
+param uiCustomCommand string = 'pm2 serve /home/site/wwwroot --spa --no-daemon'
+
 @description('Optional. The name of the API App Service to create.')
 param apiWebAppName string = 'app-projectestimate-api-${env}'
 
@@ -251,6 +254,7 @@ resource uiWebAppConfig 'Microsoft.Web/sites/config@2024-04-01' = {
   name: '${uiWebApp.name}/web'
   properties: {
     linuxFxVersion: 'NODE|22-lts'
+    appCommandLine: uiCustomCommand
   }
 }
 
