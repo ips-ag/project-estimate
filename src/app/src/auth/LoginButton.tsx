@@ -42,7 +42,7 @@ export const LoginButton = () => {
         onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#106ebe'}
         onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#0078d4'}
       >
-        Sign in with Microsoft
+        Sign in with Microsoft Entra ID
       </button>
     </div>
   );

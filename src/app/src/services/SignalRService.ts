@@ -1,6 +1,7 @@
 import * as signalR from "@microsoft/signalr";
 import { config } from "../config/config";
 import { MessageTypeModel, ConnectionState } from "../types";
+import { getAccessToken } from "../auth/tokenService";
 
 export default class SignalRService {
   private connection: signalR.HubConnection;
@@ -12,33 +13,7 @@ export default class SignalRService {
   constructor() {
     this.connection = new signalR.HubConnectionBuilder()
       .withUrl(config.apiUrl + "/hub", {
-        accessTokenFactory: async () => {
-          try {
-            // Import dynamically to avoid build errors when packages aren't installed yet
-            const { PublicClientApplication } = await import("@azure/msal-browser");
-            const { msalConfig } = await import("../auth/authConfig");
-            
-            const msalInstance = new PublicClientApplication(msalConfig);
-            await msalInstance.initialize();
-            
-            const accounts = msalInstance.getAllAccounts();
-            if (accounts.length === 0) {
-              console.error('No accounts found in MSAL for SignalR');
-              return "";
-            }
-
-            const account = accounts[0];
-      const tokenRequest = {
-        scopes: ["openid", "profile", "email"],
-        account: account
-      };            const response = await msalInstance.acquireTokenSilent(tokenRequest);
-            console.log('Token acquired for SignalR connection');
-            return response.accessToken;
-          } catch (error) {
-            console.error('Error acquiring token for SignalR:', error);
-            return "";
-          }
-        }
+        accessTokenFactory: getAccessToken,
       })
       .withAutomaticReconnect([0, 2000, 10000, 30000, 30000, 30000, 30000, 30000])
       .build();

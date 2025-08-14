@@ -1,6 +1,5 @@
 import type { Configuration, PopupRequest } from "@azure/msal-browser";
 
-// MSAL configuration
 export const msalConfig: Configuration = {
   auth: {
     clientId: import.meta.env.VITE_AZURE_CLIENT_ID,
