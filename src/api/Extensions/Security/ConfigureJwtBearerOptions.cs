@@ -25,6 +25,15 @@ internal class ConfigureJwtBearerOptions : IPostConfigureOptions<JwtBearerOption
         options.IncludeErrorDetails = true;
         options.Events = new JwtBearerEvents
         {
+            OnMessageReceived = context =>
+            {
+                var accessToken = context.Request.Query["access_token"];
+                if (!string.IsNullOrEmpty(accessToken))
+                {
+                    context.Token = accessToken;
+                }
+                return Task.CompletedTask;
+            },
             OnChallenge = c =>
             {
                 c.HandleResponse();
