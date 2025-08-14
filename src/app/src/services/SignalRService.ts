@@ -1,6 +1,7 @@
 import * as signalR from "@microsoft/signalr";
 import { config } from "../config/config";
 import { MessageTypeModel, ConnectionState } from "../types";
+import { getAccessToken } from "../auth/tokenService";
 
 export default class SignalRService {
   private connection: signalR.HubConnection;
@@ -11,7 +12,9 @@ export default class SignalRService {
 
   constructor() {
     this.connection = new signalR.HubConnectionBuilder()
-      .withUrl(config.apiUrl + "/hub")
+      .withUrl(config.apiUrl + "/hub", {
+        accessTokenFactory: getAccessToken,
+      })
       .withAutomaticReconnect([0, 2000, 10000, 30000, 30000, 30000, 30000, 30000])
       .build();
   }

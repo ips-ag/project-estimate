@@ -40,8 +40,14 @@ param apiWebAppName string = 'app-projectestimate-api-${env}'
 @description('Optional. The name of the Storage Account to create.')
 param storageAccountName string = 'stoprojectestimate${env}'
 
+@description('Optional. The name of the Key Vault to create.')
+param keyVaultName string = 'kv-projectestimate-${env}'
+
 @description('Optional. Indicates number fo days to retain deleted items (containers, blobs, snapshosts, versions). Default value is 7')
 param daysSoftDelete int = 7
+
+@description('Optional. Enable Key Vault purge protection. Default is false.')
+param enableKeyVaultPurgeProtection bool = false
 
 resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2023-09-01' = {
   name: logAnalyticsName
@@ -75,6 +81,28 @@ resource appInsights 'Microsoft.Insights/components@2020-02-02' = {
     WorkspaceResourceId: logAnalytics.id
     Flow_Type: 'Bluefield'
     Request_Source: 'rest'
+  }
+}
+
+resource keyVault 'Microsoft.KeyVault/vaults@2024-11-01' = {
+  name: keyVaultName
+  location: location
+  tags: tags
+  properties: {
+    sku: {
+      family: 'A'
+      name: 'standard'
+    }
+    tenantId: subscription().tenantId
+    enableRbacAuthorization: true
+    enableSoftDelete: true
+    enablePurgeProtection: enableKeyVaultPurgeProtection ? true : null
+    softDeleteRetentionInDays: 10
+    publicNetworkAccess: 'Enabled'
+    networkAcls: {
+      defaultAction: 'Allow'
+      bypass: 'AzureServices'
+    }
   }
 }
 
@@ -116,6 +144,54 @@ resource documentIntelligence 'Microsoft.CognitiveServices/accounts@2024-10-01' 
   }
 }
 
+resource applicationInsightsConnectionStringSecret 'Microsoft.KeyVault/vaults/secrets@2024-11-01' = {
+  parent: keyVault
+  name: 'ApplicationInsights--ConnectionString'
+  properties: {
+    value: appInsights.properties.ConnectionString
+  }
+}
+
+resource storageConnectionStringSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
+  parent: keyVault
+  name: 'StorageAccount--ConnectionString'
+  properties: {
+    value: storageAccount.outputs.connectionString
+  }
+}
+
+resource openAiEndpointSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
+  parent: keyVault
+  name: 'Azure--OpenAI--Endpoint'
+  properties: {
+    value: openAIService.outputs.endpoint
+  }
+}
+
+resource openAiApiKeySecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
+  parent: keyVault
+  name: 'Azure--OpenAI--ApiKey'
+  properties: {
+    value: openAIService.outputs.apiKey
+  }
+}
+
+resource documentIntelligenceEndpointSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
+  parent: keyVault
+  name: 'Azure--DocumentIntelligence--Endpoint'
+  properties: {
+    value: documentIntelligence.properties.endpoint
+  }
+}
+
+resource documentIntelligenceApiKeySecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
+  parent: keyVault
+  name: 'Azure--DocumentIntelligence--ApiKey'
+  properties: {
+    value: documentIntelligence.listKeys().key1
+  }
+}
+
 resource appServicePlan 'Microsoft.Web/serverfarms@2024-04-01' = {
   name: appServicePlanName
   location: location
@@ -154,12 +230,33 @@ module apiWebApp 'webApp.bicep' = {
     clientAffinityEnabled: false
     httpsOnly: true
     kind: 'app,linux'
+    useManagedIdentity: true
+  }
+}
+
+resource keyVaultRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  scope: keyVault
+  name: guid(keyVault.id, apiWebAppName, 'Key Vault Secrets User')
+  properties: {
+    roleDefinitionId: subscriptionResourceId(
+      'Microsoft.Authorization/roleDefinitions',
+      '4633458b-17de-408a-b874-0445c86b69e6'
+    ) // Key Vault Secrets User
+    principalId: apiWebApp.outputs.principalId
+    principalType: 'ServicePrincipal'
+  }
+}
+
+resource uiWebAppConfig 'Microsoft.Web/sites/config@2024-04-01' = {
+  name: '${uiWebApp.name}/web'
+  properties: {
+    linuxFxVersion: 'NODE|22-lts'
   }
 }
 
 resource apiWebAppConfig 'Microsoft.Web/sites/config@2024-04-01' = {
   name: '${apiWebAppName}/web'
-  dependsOn: [apiWebApp]
+  dependsOn: [apiWebApp, keyVaultRoleAssignment]
   properties: {
     linuxFxVersion: 'DOTNETCORE|9.0'
     cors: {
@@ -167,12 +264,38 @@ resource apiWebAppConfig 'Microsoft.Web/sites/config@2024-04-01' = {
       supportCredentials: true
     }
     appSettings: [
-      { name: 'APPLICATIONINSIGHTS_CONNECTION_STRING', value: appInsights.properties.ConnectionString }
-      { name: 'Azure__StorageAccount__ConnectionString', value: storageAccount.outputs.connectionString }
-      { name: 'Azure__OpenAI__Endpoint', value: openAIService.outputs.endpoint }
-      { name: 'Azure__OpenAI__ApiKey', value: openAIService.outputs.apiKey }
-      { name: 'Azure__DocumentIntelligence__Endpoint', value: documentIntelligence.properties.endpoint }
-      { name: 'Azure__DocumentIntelligence__ApiKey', value: documentIntelligence.listKeys().key1 }
+      {
+        name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
+        value: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=ApplicationInsights--ConnectionString)'
+      }
+      {
+        name: 'Azure__StorageAccount__ConnectionString'
+        value: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=StorageAccount--ConnectionString)'
+      }
+      {
+        name: 'Azure__OpenAI__Endpoint'
+        value: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=Azure--OpenAI--Endpoint)'
+      }
+      {
+        name: 'Azure__OpenAI__ApiKey'
+        value: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=Azure--OpenAI--ApiKey)'
+      }
+      {
+        name: 'Azure__DocumentIntelligence__Endpoint'
+        value: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=Azure--DocumentIntelligence--Endpoint)'
+      }
+      {
+        name: 'Azure__DocumentIntelligence__ApiKey'
+        value: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=Azure--DocumentIntelligence--ApiKey)'
+      }
+      {
+        name: 'Security__Authentication__Authority'
+        value: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=Security--Authentication--Authority)'
+      }
+      {
+        name: 'Security__Authentication__Audience'
+        value: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=Security--Authentication--Audience)'
+      }
     ]
   }
 }

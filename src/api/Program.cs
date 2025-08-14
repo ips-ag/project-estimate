@@ -1,6 +1,8 @@
 using Microsoft.ApplicationInsights.Extensibility;
 using ProjectEstimate.Application.Extensions;
 using ProjectEstimate.Extensions.ApplicationInsights;
+using ProjectEstimate.Extensions.Cors;
+using ProjectEstimate.Extensions.Security;
 using ProjectEstimate.Repositories.Extensions;
 using ProjectEstimate.Repositories.Hubs;
 using Serilog;
@@ -20,6 +22,8 @@ try
     builder.Services.AddApplicationInsightsTelemetry();
     builder.Services.AddSignalR();
     builder.Services.AddSingleton<ITelemetryInitializer, ExceptionSamplingRateTelemetryInitializer>();
+    builder.Services.ConfigureAuthentication();
+    builder.Services.ConfigureCors();
     builder.Services.AddApplication();
     builder.Services.AddRepositories();
 
@@ -28,7 +32,9 @@ try
     {
         app.MapOpenApi();
     }
-    app.UseCors(cors => cors.AllowAnyMethod().AllowAnyHeader().SetIsOriginAllowed(_ => true).AllowCredentials());
+    app.UseCorsMiddleware();
+    app.UseAuthentication();
+    app.UseAuthorization();
     app.MapControllers();
     app.MapHub<ChatHub>("/api/hub");
     await app.RunAsync();

@@ -11,6 +11,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    environment: Development
 
     steps:
       - name: Checkout code
@@ -38,7 +39,9 @@ jobs:
           yarn build
         working-directory: src/app
         env:
-          VITE_API_ROOT: https://app-projectestimate-api-dev.azurewebsites.net/api
+          VITE_API_ROOT: ${{ secrets.VITE_API_ROOT }}
+          VITE_AZURE_CLIENT_ID: ${{ secrets.VITE_AZURE_CLIENT_ID }}
+          VITE_AZURE_AUTHORITY: ${{ secrets.VITE_AZURE_AUTHORITY }}
 
       - name: Package artifact
         uses: actions/upload-artifact@v4

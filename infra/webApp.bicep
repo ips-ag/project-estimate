@@ -26,10 +26,16 @@ param alwaysOn bool = true
 @description(' Optional. Web app kind.')
 param kind string = 'app,linux'
 
+@description('Optional. Enable system-assigned managed identity.')
+param useManagedIdentity bool = false
+
 resource webApp 'Microsoft.Web/sites@2024-04-01' = {
   name: name
   location: location
   tags: tags
+  identity: useManagedIdentity ? {
+    type: 'SystemAssigned'
+  } : null
   properties: {
     serverFarmId: appServicePlanId
     clientAffinityEnabled: clientAffinityEnabled
@@ -44,3 +50,4 @@ resource webApp 'Microsoft.Web/sites@2024-04-01' = {
 output endpoint string = 'https://${webApp.properties.defaultHostName}'
 output name string = webApp.name
 output id string = webApp.id
+output principalId string = useManagedIdentity ? webApp.identity.principalId : ''

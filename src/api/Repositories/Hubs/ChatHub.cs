@@ -1,9 +1,11 @@
 ﻿using System.Threading.Channels;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using ProjectEstimate.Repositories.Hubs.Models;
 
 namespace ProjectEstimate.Repositories.Hubs;
 
+[Authorize]
 internal class ChatHub : Hub<IChatClient>
 {
     private readonly Channel<ChatCompletionRequestModel> _workQueue;
