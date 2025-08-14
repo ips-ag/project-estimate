@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { MsalProvider } from "@azure/msal-react";
 import { PublicClientApplication } from "@azure/msal-browser";
 import { msalConfig } from "./auth/authConfig";
@@ -26,6 +26,7 @@ function AppContent() {
     return saved === "true";
   });
   const [isWaitingForUserInput, setIsWaitingForUserInput] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const signalRServiceRef = useRef<SignalRService>(new SignalRService());
 
   const focusUserInput = (delay: number = 0): void => {
@@ -46,6 +47,8 @@ function AppContent() {
   }, [showReasoning]);
 
   useEffect(() => {
+    if (!isAuthenticated) return;
+
     const handleMessageReceived = (
       assistant: string,
       message: string,
@@ -83,7 +86,7 @@ function AppContent() {
       handleConnectionStateChanged,
       handleUserInputTimeout
     );
-  }, []);
+  }, [isAuthenticated]);
 
   const handleFileUpload = async (file: File) => {
     try {
@@ -126,7 +129,7 @@ function AppContent() {
   };
 
   return (
-    <AuthGuard>
+    <AuthGuard onAuthenticated={() => setIsAuthenticated(true)}>
       <div className="app-container">
         <Header />
         <MessageList messages={messages} showReasoning={showReasoning} />
