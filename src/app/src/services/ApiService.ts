@@ -7,11 +7,9 @@ export default class ApiService {
     try {
       const token = await getAccessToken();
       const headers: HeadersInit = {};
-
       if (token) {
         headers["Authorization"] = `Bearer ${token}`;
       }
-
       const formData = new FormData();
       formData.append("file", file, file.name);
       const response = await fetch(config.apiUrl + "/file", {
