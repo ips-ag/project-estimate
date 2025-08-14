@@ -46,6 +46,9 @@ param keyVaultName string = 'kv-projectestimate-${env}'
 @description('Optional. Indicates number fo days to retain deleted items (containers, blobs, snapshosts, versions). Default value is 7')
 param daysSoftDelete int = 7
 
+@description('Optional. Enable Key Vault purge protection. Default is false.')
+param enableKeyVaultPurgeProtection bool = false
+
 resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2023-09-01' = {
   name: logAnalyticsName
   location: location
@@ -81,6 +84,28 @@ resource appInsights 'Microsoft.Insights/components@2020-02-02' = {
   }
 }
 
+resource keyVault 'Microsoft.KeyVault/vaults@2024-11-01' = {
+  name: keyVaultName
+  location: location
+  tags: tags
+  properties: {
+    sku: {
+      family: 'A'
+      name: 'standard'
+    }
+    tenantId: subscription().tenantId
+    enableRbacAuthorization: true
+    enableSoftDelete: true
+    enablePurgeProtection: enableKeyVaultPurgeProtection ? true : null
+    softDeleteRetentionInDays: 10
+    publicNetworkAccess: 'Enabled'
+    networkAcls: {
+      defaultAction: 'Allow'
+      bypass: 'AzureServices'
+    }
+  }
+}
+
 module storageAccount 'storageAccount.bicep' = {
   name: storageAccountName
   params: {
@@ -91,45 +116,42 @@ module storageAccount 'storageAccount.bicep' = {
   }
 }
 
-resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' = {
-  name: keyVaultName
+module openAIService 'openAiService.bicep' = {
+  name: openAIServiceName
+  params: {
+    openAIServiceName: openAIServiceName
+    location: location
+    tags: tags
+  }
+}
+
+resource documentIntelligence 'Microsoft.CognitiveServices/accounts@2024-10-01' = {
+  name: documentIntelligenceName
   location: location
   tags: tags
+  kind: 'FormRecognizer'
+  sku: {
+    name: 'S0'
+  }
   properties: {
-    sku: {
-      family: 'A'
-      name: 'standard'
-    }
-    tenantId: subscription().tenantId
-    enabledForDeployment: false
-    enabledForDiskEncryption: false
-    enabledForTemplateDeployment: false
-    enableSoftDelete: true
-    softDeleteRetentionInDays: 90
-    enableRbacAuthorization: true
+    customSubDomainName: toLower(documentIntelligenceName)
     publicNetworkAccess: 'Enabled'
     networkAcls: {
-      bypass: 'AzureServices'
       defaultAction: 'Allow'
+      ipRules: []
+      virtualNetworkRules: []
     }
   }
 }
 
-// Grant Key Vault access to API Web App
-resource keyVaultRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  scope: keyVault
-  name: guid(keyVault.id, apiWebAppName, 'Key Vault Secrets User')
+resource applicationInsightsConnectionStringSecret 'Microsoft.KeyVault/vaults/secrets@2024-11-01' = {
+  parent: keyVault
+  name: 'ApplicationInsights--ConnectionString'
   properties: {
-    roleDefinitionId: subscriptionResourceId(
-      'Microsoft.Authorization/roleDefinitions',
-      '4633458b-17de-408a-b874-0445c86b69e6'
-    ) // Key Vault Secrets User
-    principalId: apiWebApp.outputs.principalId
-    principalType: 'ServicePrincipal'
+    value: appInsights.properties.ConnectionString
   }
 }
 
-// Add secrets to Key Vault
 resource storageConnectionStringSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
   parent: keyVault
   name: 'StorageAccount--ConnectionString'
@@ -167,34 +189,6 @@ resource documentIntelligenceApiKeySecret 'Microsoft.KeyVault/vaults/secrets@202
   name: 'Azure--DocumentIntelligence--ApiKey'
   properties: {
     value: documentIntelligence.listKeys().key1
-  }
-}
-
-module openAIService 'openAiService.bicep' = {
-  name: openAIServiceName
-  params: {
-    openAIServiceName: openAIServiceName
-    location: location
-    tags: tags
-  }
-}
-
-resource documentIntelligence 'Microsoft.CognitiveServices/accounts@2024-10-01' = {
-  name: documentIntelligenceName
-  location: location
-  tags: tags
-  kind: 'FormRecognizer'
-  sku: {
-    name: 'S0'
-  }
-  properties: {
-    customSubDomainName: toLower(documentIntelligenceName)
-    publicNetworkAccess: 'Enabled'
-    networkAcls: {
-      defaultAction: 'Allow'
-      ipRules: []
-      virtualNetworkRules: []
-    }
   }
 }
 
@@ -240,6 +234,26 @@ module apiWebApp 'webApp.bicep' = {
   }
 }
 
+resource keyVaultRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  scope: keyVault
+  name: guid(keyVault.id, apiWebAppName, 'Key Vault Secrets User')
+  properties: {
+    roleDefinitionId: subscriptionResourceId(
+      'Microsoft.Authorization/roleDefinitions',
+      '4633458b-17de-408a-b874-0445c86b69e6'
+    ) // Key Vault Secrets User
+    principalId: apiWebApp.outputs.principalId
+    principalType: 'ServicePrincipal'
+  }
+}
+
+resource uiWebAppConfig 'Microsoft.Web/sites/config@2024-04-01' = {
+  name: '${uiWebApp.name}/web'
+  properties: {
+    linuxFxVersion: 'NODE|22-lts'
+  }
+}
+
 resource apiWebAppConfig 'Microsoft.Web/sites/config@2024-04-01' = {
   name: '${apiWebAppName}/web'
   dependsOn: [apiWebApp, keyVaultRoleAssignment]
@@ -250,7 +264,10 @@ resource apiWebAppConfig 'Microsoft.Web/sites/config@2024-04-01' = {
       supportCredentials: true
     }
     appSettings: [
-      { name: 'APPLICATIONINSIGHTS_CONNECTION_STRING', value: appInsights.properties.ConnectionString }
+      {
+        name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
+        value: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=ApplicationInsights--ConnectionString)'
+      }
       {
         name: 'Azure__StorageAccount__ConnectionString'
         value: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=StorageAccount--ConnectionString)'
