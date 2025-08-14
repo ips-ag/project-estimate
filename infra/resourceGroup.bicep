@@ -294,11 +294,11 @@ resource apiWebAppConfig 'Microsoft.Web/sites/config@2024-04-01' = {
       }
       {
         name: 'Security__Authentication__Authority'
-        value: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=Security--Authentication--Authority)'
+        value: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=Authentication--Authority)'
       }
       {
         name: 'Security__Authentication__Audience'
-        value: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=Security--Authentication--Audience)'
+        value: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=Authentication--Audience)'
       }
     ]
   }
