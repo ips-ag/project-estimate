@@ -1,28 +1,25 @@
-﻿using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.Agents;
-
-#pragma warning disable SKEXP0110
+﻿using Microsoft.Agents.AI;
+using Microsoft.Extensions.AI;
 
 namespace ProjectEstimate.Repositories.Agents.Architect;
 
 internal class ArchitectAgentFactory : IAgentFactory
 {
     public const string AgentName = "Architect";
-    private readonly Kernel _kernel;
+    private readonly IChatClient _chatClient;
 
-    public ArchitectAgentFactory(Kernel kernel)
+    public ArchitectAgentFactory(IChatClient chatClient)
     {
-        _kernel = kernel;
+        _chatClient = chatClient;
     }
 
-    public Agent Create()
+    public AIAgent Create()
     {
-        var definition = new AgentDefinition
+        var options = new ChatClientAgentOptions
         {
             Name = AgentName,
             Description =
                 "Architect agent for creating use-cases, breaking them into tasks, and estimating task delivery effort.",
-            Metadata = new AgentMetadata { Authors = [AgentName] },
             Instructions =
                 """
                 Assistant is an experienced software architects. It estimates effort needed for project delivery, based on requirements.
@@ -46,10 +43,8 @@ internal class ArchitectAgentFactory : IAgentFactory
                 |Documentation|Document code and methods|
 
                 Do not answer requests that are not related to software project delivery estimation.
-                """,
-            Type = ChatCompletionAgentFactory.ChatCompletionAgentType
+                """
         };
-        var factory = new ChatCompletionAgentFactory();
-        return factory.CreateAsync(_kernel, definition).GetAwaiter().GetResult();
+        return _chatClient.CreateAIAgent(options);
     }
 }

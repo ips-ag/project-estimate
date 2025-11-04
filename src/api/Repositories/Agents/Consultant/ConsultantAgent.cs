@@ -1,5 +1,5 @@
-﻿using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.Agents;
+﻿using Microsoft.Agents.AI;
+using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Agents.Orchestration.GroupChat;
 using Microsoft.SemanticKernel.Agents.Runtime.InProcess;
 using Microsoft.SemanticKernel.ChatCompletion;
@@ -18,20 +18,20 @@ namespace ProjectEstimate.Repositories.Agents.Consultant;
 
 internal class ConsultantAgent
 {
-    private readonly Agent _analystAgent;
-    private readonly Agent _architectAgent;
-    private readonly Agent _developerAgent;
+    private readonly AIAgent _analystAgent;
+    private readonly AIAgent _architectAgent;
+    private readonly AIAgent _developerAgent;
     private readonly IUserInteraction _userInteraction;
     private readonly IDocumentRepository _documentRepository;
     private readonly ILoggerFactory _loggerFactory;
 
     public ConsultantAgent(
         [FromKeyedServices(AnalystAgentFactory.AgentName)]
-        Agent analystAgent,
+        AIAgent analystAgent,
         [FromKeyedServices(ArchitectAgentFactory.AgentName)]
-        Agent architectAgent,
+        AIAgent architectAgent,
         [FromKeyedServices(DeveloperAgentFactory.AgentName)]
-        Agent developerAgent,
+        AIAgent developerAgent,
         IUserInteraction userInteraction,
         IDocumentRepository documentRepository,
         ILoggerFactory loggerFactory)

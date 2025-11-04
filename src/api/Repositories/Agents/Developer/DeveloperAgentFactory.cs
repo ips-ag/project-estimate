@@ -1,28 +1,25 @@
-﻿using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.Agents;
-
-#pragma warning disable SKEXP0110
+﻿using Microsoft.Agents.AI;
+using Microsoft.Extensions.AI;
 
 namespace ProjectEstimate.Repositories.Agents.Developer;
 
 internal class DeveloperAgentFactory : IAgentFactory
 {
     public const string AgentName = "Developer";
-    private readonly Kernel _kernel;
+    private readonly IChatClient _chatClient;
 
-    public DeveloperAgentFactory(Kernel kernel)
+    public DeveloperAgentFactory(IChatClient chatClient)
     {
-        _kernel = kernel;
+        _chatClient = chatClient;
     }
 
-    public Agent Create()
+    public AIAgent Create()
     {
-        var definition = new AgentDefinition
+        var options = new ChatClientAgentOptions
         {
             Name = AgentName,
             Description =
                 "Developer agent for validating and correcting effort estimates for software project delivery.",
-            Metadata = new AgentMetadata { Authors = [AgentName] },
             Instructions =
                 """
                 You are an experienced software developer. You validate and create task estimates for project delivery, based on existing requirements, user-stories, and tasks.
@@ -51,10 +48,8 @@ internal class DeveloperAgentFactory : IAgentFactory
                 |__Total effort__|||||__11.1667__|
 
                 Do not answer requests that are not related to software project delivery estimation validation.
-                """,
-            Type = ChatCompletionAgentFactory.ChatCompletionAgentType
+                """
         };
-        var factory = new ChatCompletionAgentFactory();
-        return factory.CreateAsync(_kernel, definition).GetAwaiter().GetResult();
+        return _chatClient.CreateAIAgent(options);
     }
 }

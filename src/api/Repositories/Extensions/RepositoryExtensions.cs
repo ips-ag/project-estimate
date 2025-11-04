@@ -1,10 +1,10 @@
-﻿using System.Threading.Channels;
+﻿using System.ClientModel;
+using System.ClientModel.Primitives;
+using System.Threading.Channels;
+using Azure.AI.OpenAI;
+using Microsoft.Agents.AI;
+using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Options;
-using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.Agents;
-using Microsoft.SemanticKernel.ChatCompletion;
-using Microsoft.SemanticKernel.Connectors.AzureOpenAI;
-using Microsoft.SemanticKernel.TextGeneration;
 using ProjectEstimate.Repositories.Agents;
 using ProjectEstimate.Repositories.Agents.Analyst;
 using ProjectEstimate.Repositories.Agents.Architect;
@@ -46,24 +46,25 @@ public static class RepositoryExtensions
             return Channel.CreateBounded<ChatCompletionRequestModel>(options);
         });
         services.AddHostedService<AgentBackgroundService>();
-        Func<IServiceProvider, AzureOpenAIChatCompletionService> azureOpenAiFactory = sp =>
+        services.AddScoped(sp =>
         {
             var options = sp.GetRequiredService<IOptions<AzureOpenAiSettings>>().Value;
             var loggerFactory = sp.GetRequiredService<ILoggerFactory>();
-            return new AzureOpenAIChatCompletionService(
-                options.DeploymentName,
-                options.Endpoint,
-                options.ApiKey,
-                loggerFactory: loggerFactory);
-        };
-        services.AddScoped<IChatCompletionService>(azureOpenAiFactory);
-        services.AddScoped<ITextGenerationService>(azureOpenAiFactory);
-        services.AddTransient<Kernel>(sp => new Kernel(sp));
+            var openAiClient = new AzureOpenAIClient(
+                new Uri(options.Endpoint),
+                new ApiKeyCredential(options.ApiKey),
+                new AzureOpenAIClientOptions
+                {
+                    ClientLoggingOptions = new ClientLoggingOptions { LoggerFactory = loggerFactory }
+                });
+            var chatClient = openAiClient.GetChatClient(options.DeploymentName);
+            return chatClient.AsIChatClient();
+        });
         //// consultant
         services.AddScoped<ConsultantAgent>();
         //// analyst
         services.AddScoped<AnalystAgentFactory>();
-        services.AddKeyedScoped<Agent>(
+        services.AddKeyedScoped<AIAgent>(
             AnalystAgentFactory.AgentName,
             (sp, _) =>
             {
@@ -72,7 +73,7 @@ public static class RepositoryExtensions
             });
         //// architect
         services.AddScoped<ArchitectAgentFactory>();
-        services.AddKeyedScoped<Agent>(
+        services.AddKeyedScoped<AIAgent>(
             ArchitectAgentFactory.AgentName,
             (sp, _) =>
             {
@@ -81,7 +82,7 @@ public static class RepositoryExtensions
             });
         //// developer
         services.AddScoped<DeveloperAgentFactory>();
-        services.AddKeyedScoped<Agent>(
+        services.AddKeyedScoped<AIAgent>(
             DeveloperAgentFactory.AgentName,
             (sp, _) =>
             {
