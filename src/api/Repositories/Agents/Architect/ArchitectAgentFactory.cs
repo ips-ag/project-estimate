@@ -7,10 +7,14 @@ internal class ArchitectAgentFactory : IAgentFactory
 {
     public const string AgentName = "Architect";
     private readonly IChatClient _chatClient;
+    private readonly ILoggerFactory _loggerFactory;
+    private readonly IServiceProvider _serviceProvider;
 
-    public ArchitectAgentFactory(IChatClient chatClient)
+    public ArchitectAgentFactory(IChatClient chatClient, ILoggerFactory loggerFactory, IServiceProvider serviceProvider)
     {
         _chatClient = chatClient;
+        _loggerFactory = loggerFactory;
+        _serviceProvider = serviceProvider;
     }
 
     public AIAgent Create()
@@ -45,6 +49,6 @@ internal class ArchitectAgentFactory : IAgentFactory
                 Do not answer requests that are not related to software project delivery estimation.
                 """
         };
-        return _chatClient.CreateAIAgent(options);
+        return _chatClient.CreateAIAgent(options: options, loggerFactory: _loggerFactory, services: _serviceProvider);
     }
 }

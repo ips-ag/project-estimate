@@ -7,10 +7,14 @@ internal class DeveloperAgentFactory : IAgentFactory
 {
     public const string AgentName = "Developer";
     private readonly IChatClient _chatClient;
+    private readonly ILoggerFactory _loggerFactory;
+    private readonly IServiceProvider _serviceProvider;
 
-    public DeveloperAgentFactory(IChatClient chatClient)
+    public DeveloperAgentFactory(IChatClient chatClient, ILoggerFactory loggerFactory, IServiceProvider serviceProvider)
     {
         _chatClient = chatClient;
+        _loggerFactory = loggerFactory;
+        _serviceProvider = serviceProvider;
     }
 
     public AIAgent Create()
@@ -50,6 +54,6 @@ internal class DeveloperAgentFactory : IAgentFactory
                 Do not answer requests that are not related to software project delivery estimation validation.
                 """
         };
-        return _chatClient.CreateAIAgent(options);
+        return _chatClient.CreateAIAgent(options: options, loggerFactory: _loggerFactory, services: _serviceProvider);
     }
 }

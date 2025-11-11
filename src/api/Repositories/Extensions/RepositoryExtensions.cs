@@ -1,6 +1,6 @@
-﻿using System.ClientModel;
-using System.ClientModel.Primitives;
+﻿using System.ClientModel.Primitives;
 using System.Threading.Channels;
+using Azure;
 using Azure.AI.OpenAI;
 using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
@@ -52,10 +52,16 @@ public static class RepositoryExtensions
             var loggerFactory = sp.GetRequiredService<ILoggerFactory>();
             var openAiClient = new AzureOpenAIClient(
                 new Uri(options.Endpoint),
-                new ApiKeyCredential(options.ApiKey),
+                new AzureKeyCredential(options.ApiKey),
                 new AzureOpenAIClientOptions
                 {
-                    ClientLoggingOptions = new ClientLoggingOptions { LoggerFactory = loggerFactory }
+                    ClientLoggingOptions = new ClientLoggingOptions
+                    {
+                        LoggerFactory = loggerFactory,
+                        EnableLogging = true,
+                        EnableMessageLogging = true,
+                        EnableMessageContentLogging = true
+                    }
                 });
             var chatClient = openAiClient.GetChatClient(options.DeploymentName);
             return chatClient.AsIChatClient();

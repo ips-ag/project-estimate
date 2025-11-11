@@ -9,10 +9,6 @@ using ProjectEstimate.Repositories.Agents.Developer;
 using ProjectEstimate.Repositories.Documents;
 using ProjectEstimate.Repositories.Hubs;
 
-#pragma warning disable SKEXP0110
-
-#pragma warning disable SKEXP0001
-
 namespace ProjectEstimate.Repositories.Agents.Consultant;
 
 internal class ConsultantAgent
@@ -22,7 +18,6 @@ internal class ConsultantAgent
     private readonly AIAgent _developerAgent;
     private readonly IUserInteraction _userInteraction;
     private readonly IDocumentRepository _documentRepository;
-    private readonly ILoggerFactory _loggerFactory;
     private readonly ILogger<ConsultantAgent> _logger;
 
     public ConsultantAgent(
@@ -34,7 +29,6 @@ internal class ConsultantAgent
         AIAgent developerAgent,
         IUserInteraction userInteraction,
         IDocumentRepository documentRepository,
-        ILoggerFactory loggerFactory,
         ILogger<ConsultantAgent> logger)
     {
         _analystAgent = analystAgent;
@@ -42,7 +36,6 @@ internal class ConsultantAgent
         _developerAgent = developerAgent;
         _userInteraction = userInteraction;
         _documentRepository = documentRepository;
-        _loggerFactory = loggerFactory;
         _logger = logger;
     }
 
@@ -55,8 +48,6 @@ internal class ConsultantAgent
     {
         var userInput = request.Prompt;
         var fileInput = await _documentRepository.ReadDocumentAsync(request.FileLocation, cancellationToken);
-        // TODO: get history from repository
-        List<ChatMessage> history = [];
         var userMessage =
             $"""
              User prompt:
@@ -64,7 +55,8 @@ internal class ConsultantAgent
              Additional context:
              \"\"\"{fileInput}\"\"\"
              """;
-        history.Add(new ChatMessage(ChatRole.User, userMessage));
+        // TODO: get history from repository
+        List<ChatMessage> history = [new(ChatRole.User, userMessage)];
         // async ValueTask ResponseCallback(ChatMessageContent message)
         // {
         //     history.Add(message);
@@ -143,7 +135,6 @@ internal class ConsultantAgent
                         if (messageBuilder.Length > 0)
                         {
                             var message = messageBuilder.ToString();
-                            history.Add(new ChatMessage(ChatRole.Assistant, message) { AuthorName = assistant });
                             await _userInteraction.MessageOutputAsync(
                                 assistant: assistant,
                                 message: message,
@@ -160,7 +151,6 @@ internal class ConsultantAgent
                 case WorkflowOutputEvent output:
                 {
                     var chatMessages = output.As<List<ChatMessage>>()!;
-                    history.AddRange(chatMessages);
                     var lastMessage = chatMessages.Last();
                     var message = lastMessage.Text;
                     assistant = lastMessage.AuthorName ?? lastMessage.Role.Value;
