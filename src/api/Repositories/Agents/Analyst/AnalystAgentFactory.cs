@@ -26,7 +26,10 @@ internal class AnalystAgentFactory : IAgentFactory
         {
             Name = AgentName,
             Description = description,
-            Instructions = instructions
+            ChatOptions = new ChatOptions
+            {
+                Instructions = instructions
+            }
             // """
             // You are an experienced business analysts. You analyze and verify project requirements.
             // Input consists of all gathered requirements for a software project. They can be functional or non-functional requirements.
