@@ -262,7 +262,7 @@ resource apiWebAppConfig 'Microsoft.Web/sites/config@2024-04-01' = {
   name: '${apiWebAppName}/web'
   dependsOn: [apiWebApp, keyVaultRoleAssignment]
   properties: {
-    linuxFxVersion: 'DOTNETCORE|9.0'
+    linuxFxVersion: 'DOTNETCORE|10.0'
     cors: {
       allowedOrigins: [uiWebApp.outputs.endpoint]
       supportCredentials: true
