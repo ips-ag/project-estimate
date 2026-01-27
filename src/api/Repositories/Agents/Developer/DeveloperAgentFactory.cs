@@ -57,6 +57,6 @@ internal class DeveloperAgentFactory : IAgentFactory
                     """
             }
         };
-        return _chatClient.CreateAIAgent(options: options, loggerFactory: _loggerFactory, services: _serviceProvider);
+        return _chatClient.AsAIAgent(options: options, loggerFactory: _loggerFactory, services: _serviceProvider);
     }
 }

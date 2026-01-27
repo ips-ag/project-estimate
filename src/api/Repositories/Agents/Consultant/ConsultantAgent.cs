@@ -46,8 +46,8 @@ internal class ConsultantAgent
     /// <param name="cancellationToken"></param>
     public async ValueTask ExecuteAsync(ChatCompletionRequest request, CancellationToken cancellationToken)
     {
-        var userInput = request.Prompt;
-        var fileInput = await _documentRepository.ReadDocumentAsync(request.FileLocation, cancellationToken);
+        string? userInput = request.Prompt;
+        string? fileInput = await _documentRepository.ReadDocumentAsync(request.FileLocation, cancellationToken);
         var userMessage =
             $"""
              User prompt:
@@ -106,7 +106,8 @@ internal class ConsultantAgent
         // }
 
         //AgentGroupChatManager chatManager = new(history) { InteractiveCallback = InteractiveCallback };
-        var workflow = AgentWorkflowBuilder
+        RequestPort answerPort = RequestPort.Create<string, string>("UserAnswer");
+        var workflow =  AgentWorkflowBuilder
             .CreateGroupChatBuilderWith(agents => new AgentGroupChatManager(agents))
             .AddParticipants(_analystAgent, _architectAgent, _developerAgent)
             .Build();
@@ -126,9 +127,10 @@ internal class ConsultantAgent
         {
             switch (evt)
             {
-                case AgentRunUpdateEvent e:
+                // agent processing finished
+                case AgentResponseUpdateEvent e:
                 {
-                    var tokens = e.Update.Text;
+                    string tokens = e.Update.Text;
                     if (string.IsNullOrEmpty(tokens) && e.Update.Contents.Count == 0) continue;
                     if (e.ExecutorId != lastExecutorId)
                     {
@@ -148,11 +150,20 @@ internal class ConsultantAgent
                     messageBuilder.Append(tokens);
                     break;
                 }
+                case RequestInfoEvent info:
+                {
+                    var question = info.Request.DataAs<string>();
+                    string? answer = await _userInteraction.GetAnswerAsync(cancel: cancellationToken);
+                    var response = info.Request.CreateResponse(answer);
+                    await run.SendResponseAsync(response);
+                    break;
+                }
+                // conversation end
                 case WorkflowOutputEvent output:
                 {
                     var chatMessages = output.As<List<ChatMessage>>()!;
                     var lastMessage = chatMessages.Last();
-                    var message = lastMessage.Text;
+                    string message = lastMessage.Text;
                     assistant = lastMessage.AuthorName ?? lastMessage.Role.Value;
                     await _userInteraction.MessageOutputAsync(
                         assistant: assistant,
@@ -161,6 +172,7 @@ internal class ConsultantAgent
                         cancel: cancellationToken);
                     break;
                 }
+                // workflow error
                 case WorkflowErrorEvent error:
                 {
                     await _userInteraction.MessageOutputAsync(
