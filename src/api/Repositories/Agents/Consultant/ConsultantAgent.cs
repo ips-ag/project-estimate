@@ -115,7 +115,7 @@ internal class ConsultantAgent
         // {
         //     LoggerFactory = _loggerFactory, ResponseCallback = ResponseCallback
         // };
-        await using var run = await InProcessExecution.StreamAsync(
+        await using var run = await InProcessExecution.RunStreamingAsync(
             workflow: workflow,
             input: history,
             cancellationToken: cancellationToken);
@@ -152,7 +152,7 @@ internal class ConsultantAgent
                 }
                 case RequestInfoEvent info:
                 {
-                    var question = info.Request.DataAs<string>();
+                    info.Request.TryGetDataAs(out string? question);
                     string? answer = await _userInteraction.GetAnswerAsync(cancel: cancellationToken);
                     var response = info.Request.CreateResponse(answer);
                     await run.SendResponseAsync(response);
