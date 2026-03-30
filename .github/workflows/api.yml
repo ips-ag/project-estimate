@@ -31,7 +31,7 @@ jobs:
           dotnet publish src/api --configuration Release --output publish -r linux-x64
 
       - name: Package artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           if-no-files-found: error
           name: api
