@@ -8,7 +8,7 @@ export default class SignalRService {
   private isInitialized = false;
   private userInputResolver: ((value: string) => void) | null = null;
   private userInputPromise: Promise<string> | null = null;
-  private userInputTimeout: NodeJS.Timeout | null = null;
+  private userInputTimeout: ReturnType<typeof setTimeout> | null = null;
 
   constructor() {
     this.connection = new signalR.HubConnectionBuilder()
