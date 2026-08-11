@@ -20,10 +20,14 @@ param appServicePlanName string = 'asp-projectestimate-${env}'
 
 @description('Optional. The SKU for the App Service Plan.')
 @allowed([
+  'F1'
   'B1'
   'P1'
 ])
-param appServicePlanSku string = 'B1'
+param appServicePlanSku string = 'F1'
+
+@description('Optional. Whether to enable Always On for the App Service Plan. Defaults to false.')
+param appServicePlanAlwaysOn bool = false
 
 @description('Optional. The name of the Azure OpenAI Service to create.')
 param openAIServiceName string = 'openai-projectestimate-${env}'
@@ -218,6 +222,7 @@ module uiWebApp 'webApp.bicep' = {
     appServicePlanId: appServicePlan.id
     clientAffinityEnabled: false
     httpsOnly: true
+    alwaysOn: appServicePlanAlwaysOn
     kind: 'app,linux'
   }
 }
@@ -232,6 +237,7 @@ module apiWebApp 'webApp.bicep' = {
     appServicePlanId: appServicePlan.id
     clientAffinityEnabled: false
     httpsOnly: true
+    alwaysOn: appServicePlanAlwaysOn
     kind: 'app,linux'
     useManagedIdentity: true
   }
