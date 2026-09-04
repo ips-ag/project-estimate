@@ -102,8 +102,12 @@ Before running the application, ensure you have the following installed:
 
 - **Node.js (v20 or higher) and Yarn**
 
+  This project uses [Yarn Berry](https://yarnpkg.com/), managed via [Corepack](https://nodejs.org/api/corepack.html).
+
   ```sh
   node --version
+  npm install -g corepack
+  corepack enable
   yarn --version
   ```
 

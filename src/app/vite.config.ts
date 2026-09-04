@@ -6,7 +6,7 @@ import { resolve } from 'path';
 export default defineConfig({
   plugins: [plugin()],
   server: {
-    port: 50535,
+    port: 50535
   },
   build: {
     rollupOptions: {
