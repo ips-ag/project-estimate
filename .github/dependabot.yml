@@ -5,6 +5,20 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 10
+    groups:
+      npm-minor-patch:
+        applies-to: version-updates
+        update-types:
+          - minor
+          - patch
+        patterns:
+          - "*"
+      npm-major:
+        applies-to: version-updates
+        update-types:
+          - major
+        patterns:
+          - "*"
 
   - package-ecosystem: github-actions
     directory: "/"
@@ -17,3 +31,17 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 10
+    groups:
+      nuget-minor-patch:
+        applies-to: version-updates
+        update-types:
+          - minor
+          - patch
+        patterns:
+          - "*"
+      nuget-major:
+        applies-to: version-updates
+        update-types:
+          - major
+        patterns:
+          - "*"
