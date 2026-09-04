@@ -2,22 +2,22 @@
 # yarn lockfile v1
 
 
-"@azure/msal-browser@^4.30.0":
-  version "4.30.0"
-  resolved "https://registry.yarnpkg.com/@azure/msal-browser/-/msal-browser-4.30.0.tgz#30fbaf7ae26d9ab7671aabca3d41f9c52d2a3937"
-  integrity sha512-HBBKfbZkMVzzF5bofvS1cXuNHFVc+gt4/HOnCmG/0hsHuZRJvJvDg/+7nTwIpoqvJc8BQp5o23rBUfisOLxR+w==
+"@azure/msal-browser@^5.20.0":
+  version "5.20.0"
+  resolved "https://registry.yarnpkg.com/@azure/msal-browser/-/msal-browser-5.20.0.tgz#095929c7193a7013eeabef63c865ed770d1b39c6"
+  integrity sha512-mtOKr708E/E/+qhI50QufmhR8GS5C84IeFGEaH/guMOaPXT9B/obEt8TVzX5U8j5OEUgukn0PrRmwVKaigr2wA==
   dependencies:
-    "@azure/msal-common" "15.17.0"
+    "@azure/msal-common" "16.14.0"
 
-"@azure/msal-common@15.17.0":
-  version "15.17.0"
-  resolved "https://registry.yarnpkg.com/@azure/msal-common/-/msal-common-15.17.0.tgz#ae3c03378c852642b1c9a303380e945c2b897f02"
-  integrity sha512-VQ5/gTLFADkwue+FohVuCqlzFPUq4xSrX8jeZe+iwZuY6moliNC8xt86qPVNYdtbQfELDf2Nu6LI+demFPHGgw==
+"@azure/msal-common@16.14.0":
+  version "16.14.0"
+  resolved "https://registry.yarnpkg.com/@azure/msal-common/-/msal-common-16.14.0.tgz#cdddb38d832be0e1be6227ea64d4eb119997227c"
+  integrity sha512-A4rb55hI86Q9tBl/+jBj7TMz7iX2RFgQs/nExFzcAtoI/BFRVdaH5SL/MivrYD7qvweMpN8AgVvVMHV8UBYxew==
 
-"@azure/msal-react@^3.0.29":
-  version "3.0.29"
-  resolved "https://registry.yarnpkg.com/@azure/msal-react/-/msal-react-3.0.29.tgz#0a93cedf1e75b4b55102a1465277272b0c0f00a5"
-  integrity sha512-RpFfq3aIpmKajcshbaJH7Q/1CesxQRAeKorMv+uMpDw98jvi+/L0RJkNnTRmeXrV3aM34kj2LFWBQrQ9DOXs1Q==
+"@azure/msal-react@^5.7.0":
+  version "5.7.0"
+  resolved "https://registry.yarnpkg.com/@azure/msal-react/-/msal-react-5.7.0.tgz#02f371beb786e028248884b8ffe00e3a61006f05"
+  integrity sha512-hu4+PMmE4R5g1/mdUpxKZP/EZ+SvPa1PStKgphhvVd5wvY+wGl9lx8U462EQf0wBQR2mJYMxA+GRvdauH+IOQw==
 
 "@babel/code-frame@^7.29.7":
   version "7.29.7"
