@@ -4,13 +4,11 @@ export const msalConfig: Configuration = {
   auth: {
     clientId: import.meta.env.VITE_AZURE_CLIENT_ID,
     authority: import.meta.env.VITE_AZURE_AUTHORITY,
-    redirectUri: window.location.origin,
+    redirectUri: `${window.location.origin}/redirect`,
     postLogoutRedirectUri: window.location.origin,
-    navigateToLoginRequestUrl: false,
   },
   cache: {
     cacheLocation: "sessionStorage",
-    storeAuthStateInCookie: false,
   },
   system: {
     loggerOptions: {

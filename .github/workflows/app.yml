@@ -29,9 +29,12 @@ jobs:
           cache: yarn
           cache-dependency-path: src/app/yarn.lock
 
+      - name: Enable Corepack
+        run: corepack enable
+
       - name: Install dependencies
         run: |
-          yarn install --frozen-lockfile
+          yarn install --immutable
         working-directory: src/app
 
       - name: Build project
