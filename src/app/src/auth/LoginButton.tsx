@@ -1,16 +1,17 @@
 import { useMsal } from "@azure/msal-react";
+import { InteractionStatus } from "@azure/msal-browser";
 import { loginRequest } from "./authConfig";
 
 export const LoginButton = () => {
-  const { instance } = useMsal();
+  const { instance, inProgress } = useMsal();
+  const isInteractionInProgress = inProgress !== InteractionStatus.None;
 
   const handleLogin = () => {
-    console.log('Starting login process');
-    
+    if (isInteractionInProgress) {
+      return;
+    }
+
     instance.loginPopup(loginRequest)
-      .then(() => {
-        console.log('Login successful');
-      })
       .catch((e) => {
         console.error('Login error:', e);
       });
@@ -27,8 +28,9 @@ export const LoginButton = () => {
     }}>
       <h1>Project Estimate</h1>
       <p>Please sign in to continue</p>
-      <button 
+      <button
         onClick={handleLogin}
+        disabled={isInteractionInProgress}
         style={{
           padding: '12px 24px',
           fontSize: '16px',
@@ -36,13 +38,14 @@ export const LoginButton = () => {
           color: 'white',
           border: 'none',
           borderRadius: '4px',
-          cursor: 'pointer',
+          cursor: isInteractionInProgress ? 'default' : 'pointer',
+          opacity: isInteractionInProgress ? 0.7 : 1,
           transition: 'background-color 0.2s'
         }}
-        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#106ebe'}
-        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#0078d4'}
+        onMouseEnter={(e) => { if (!isInteractionInProgress) e.currentTarget.style.backgroundColor = '#106ebe'; }}
+        onMouseLeave={(e) => { if (!isInteractionInProgress) e.currentTarget.style.backgroundColor = '#0078d4'; }}
       >
-        Sign in with Microsoft Entra ID
+        {isInteractionInProgress ? 'Signing in...' : 'Sign in with Microsoft Entra ID'}
       </button>
     </div>
   );

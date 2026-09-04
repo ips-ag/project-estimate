@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { MsalProvider } from "@azure/msal-react";
-import { PublicClientApplication } from "@azure/msal-browser";
-import { msalConfig } from "./auth/authConfig";
+import { msalInstance } from "./auth/msalInstance";
 import { AuthGuard } from "./auth/AuthGuard";
 import { Message, MessageTypeModel, ConnectionState } from "./types";
 import Header from "./components/layout/Header";
@@ -12,8 +11,6 @@ import ConnectionStatus from "./components/chat/ConnectionStatus";
 import SignalRService from "./services/SignalRService";
 import ApiService from "./services/ApiService";
 import "./App.css";
-
-const msalInstance = new PublicClientApplication(msalConfig);
 
 function AppContent() {
   const [messages, setMessages] = useState<Message[]>([]);
