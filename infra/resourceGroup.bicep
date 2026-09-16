@@ -29,8 +29,11 @@ param appServicePlanSku string = 'F1'
 @description('Optional. Whether to enable Always On for the App Service Plan. Defaults to false.')
 param appServicePlanAlwaysOn bool = false
 
-@description('Optional. The name of the Azure OpenAI Service to create.')
-param openAIServiceName string = 'openai-projectestimate-${env}'
+@description('Optional. The name of the Azure AI Foundry account to create.')
+param foundryServiceName string = 'aif-projectestimate-${env}'
+
+@description('Optional. The name of the Azure AI Foundry project to create.')
+param foundryProjectName string = 'proj-projectestimate-${env}'
 
 @description('Optional. The name of the Azure AI Document Intelligence to create.')
 param documentIntelligenceName string = 'di-projectestimate-${env}'
@@ -123,10 +126,11 @@ module storageAccount 'storageAccount.bicep' = {
   }
 }
 
-module openAIService 'openAiService.bicep' = {
-  name: openAIServiceName
+module foundryService 'foundryService.bicep' = {
+  name: foundryServiceName
   params: {
-    openAIServiceName: openAIServiceName
+    foundryServiceName: foundryServiceName
+    projectName: foundryProjectName
     location: location
     tags: tags
   }
@@ -167,19 +171,19 @@ resource storageConnectionStringSecret 'Microsoft.KeyVault/vaults/secrets@2023-0
   }
 }
 
-resource openAiEndpointSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
+resource foundryEndpointSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
   parent: keyVault
-  name: 'Azure--OpenAI--Endpoint'
+  name: 'Azure--Foundry--Endpoint'
   properties: {
-    value: openAIService.outputs.endpoint
+    value: foundryService.outputs.endpoint
   }
 }
 
-resource openAiApiKeySecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
+resource foundryApiKeySecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
   parent: keyVault
-  name: 'Azure--OpenAI--ApiKey'
+  name: 'Azure--Foundry--ApiKey'
   properties: {
-    value: openAIService.outputs.apiKey
+    value: foundryService.outputs.apiKey
   }
 }
 
@@ -283,12 +287,12 @@ resource apiWebAppConfig 'Microsoft.Web/sites/config@2024-04-01' = {
         value: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=StorageAccount--ConnectionString)'
       }
       {
-        name: 'Azure__OpenAI__Endpoint'
-        value: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=Azure--OpenAI--Endpoint)'
+        name: 'Azure__Foundry__Endpoint'
+        value: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=Azure--Foundry--Endpoint)'
       }
       {
-        name: 'Azure__OpenAI__ApiKey'
-        value: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=Azure--OpenAI--ApiKey)'
+        name: 'Azure__Foundry__ApiKey'
+        value: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=Azure--Foundry--ApiKey)'
       }
       {
         name: 'Azure__DocumentIntelligence__Endpoint'

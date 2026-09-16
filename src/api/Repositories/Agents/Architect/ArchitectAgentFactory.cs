@@ -47,6 +47,10 @@ internal class ArchitectAgentFactory : IAgentFactory
 
                 Do not answer requests that are not related to software project delivery estimation.
                 """,
+            Model = new ModelDefinition
+            {
+                Options = new Dictionary<string, object> { ["reasoning_effort"] = "low" }
+            },
             Type = ChatCompletionAgentFactory.ChatCompletionAgentType
         };
         var factory = new ChatCompletionAgentFactory();

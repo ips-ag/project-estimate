@@ -128,8 +128,8 @@ Before running the application, ensure you have the following installed:
 
    ```json
    {
-     "AzureOpenAI": {
-       "Endpoint": "your-azure-openai-endpoint",
+     "AzureFoundry": {
+       "Endpoint": "your-azure-ai-foundry-endpoint",
        "ApiKey": "your-api-key",
        "DeploymentName": "your-deployment-name"
      },
