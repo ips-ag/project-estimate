@@ -27,8 +27,8 @@ public static class RepositoryExtensions
             .BindConfiguration(AzureStorageAccountSettings.SectionName)
             .ValidateDataAnnotations()
             .ValidateOnStart();
-        services.AddOptions<AzureOpenAiSettings>()
-            .BindConfiguration(AzureOpenAiSettings.SectionName)
+        services.AddOptions<AzureFoundrySettings>()
+            .BindConfiguration(AzureFoundrySettings.SectionName)
             .ValidateDataAnnotations()
             .ValidateOnStart();
         services.AddOptions<AzureDocumentIntelligenceSettings>()
@@ -46,9 +46,9 @@ public static class RepositoryExtensions
             return Channel.CreateBounded<ChatCompletionRequestModel>(options);
         });
         services.AddHostedService<AgentBackgroundService>();
-        Func<IServiceProvider, AzureOpenAIChatCompletionService> azureOpenAiFactory = sp =>
+        Func<IServiceProvider, AzureOpenAIChatCompletionService> azureFoundryFactory = sp =>
         {
-            var options = sp.GetRequiredService<IOptions<AzureOpenAiSettings>>().Value;
+            var options = sp.GetRequiredService<IOptions<AzureFoundrySettings>>().Value;
             var loggerFactory = sp.GetRequiredService<ILoggerFactory>();
             return new AzureOpenAIChatCompletionService(
                 options.DeploymentName,
@@ -56,8 +56,8 @@ public static class RepositoryExtensions
                 options.ApiKey,
                 loggerFactory: loggerFactory);
         };
-        services.AddScoped<IChatCompletionService>(azureOpenAiFactory);
-        services.AddScoped<ITextGenerationService>(azureOpenAiFactory);
+        services.AddScoped<IChatCompletionService>(azureFoundryFactory);
+        services.AddScoped<ITextGenerationService>(azureFoundryFactory);
         services.AddTransient<Kernel>(sp => new Kernel(sp));
         //// consultant
         services.AddScoped<ConsultantAgent>();

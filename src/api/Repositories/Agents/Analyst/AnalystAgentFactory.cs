@@ -40,6 +40,10 @@ internal class AnalystAgentFactory : IAgentFactory
                 When requirements analysis is complete, and all questions are answered, say 'Requirement analysis complete'.
                 Do not answer requests that are not related to project requirements analysis.
                 """,
+            Model = new ModelDefinition
+            {
+                Options = new Dictionary<string, object> { ["reasoning_effort"] = "low" }
+            },
             Type = ChatCompletionAgentFactory.ChatCompletionAgentType
         };
         var factory = new ChatCompletionAgentFactory();

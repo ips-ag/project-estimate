@@ -52,6 +52,10 @@ internal class DeveloperAgentFactory : IAgentFactory
 
                 Do not answer requests that are not related to software project delivery estimation validation.
                 """,
+            Model = new ModelDefinition
+            {
+                Options = new Dictionary<string, object> { ["reasoning_effort"] = "low" }
+            },
             Type = ChatCompletionAgentFactory.ChatCompletionAgentType
         };
         var factory = new ChatCompletionAgentFactory();
