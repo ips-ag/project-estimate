@@ -1,7 +1,8 @@
-﻿using Microsoft.SemanticKernel;
+using Microsoft.Extensions.Options;
+using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Agents;
-
-#pragma warning disable SKEXP0110
+using Microsoft.SemanticKernel.Connectors.AzureOpenAI;
+using ProjectEstimate.Repositories.Configuration;
 
 namespace ProjectEstimate.Repositories.Agents.Architect;
 
@@ -9,20 +10,21 @@ internal class ArchitectAgentFactory : IAgentFactory
 {
     public const string AgentName = "Architect";
     private readonly Kernel _kernel;
+    private readonly ReasoningEffort _reasoningEffort;
 
-    public ArchitectAgentFactory(Kernel kernel)
+    public ArchitectAgentFactory(Kernel kernel, IOptionsMonitor<AgentSettings> agentSettingsMonitor)
     {
         _kernel = kernel;
+        _reasoningEffort = agentSettingsMonitor.Get(AgentName).ReasoningEffort;
     }
 
     public Agent Create()
     {
-        var definition = new AgentDefinition
+        return new ChatCompletionAgent
         {
             Name = AgentName,
             Description =
                 "Architect agent for creating use-cases, breaking them into tasks, and estimating task delivery effort.",
-            Metadata = new AgentMetadata { Authors = [AgentName] },
             Instructions =
                 """
                 Assistant is an experienced software architects. It estimates effort needed for project delivery, based on requirements.
@@ -47,13 +49,8 @@ internal class ArchitectAgentFactory : IAgentFactory
 
                 Do not answer requests that are not related to software project delivery estimation.
                 """,
-            Model = new ModelDefinition
-            {
-                Options = new Dictionary<string, object> { ["reasoning_effort"] = "low" }
-            },
-            Type = ChatCompletionAgentFactory.ChatCompletionAgentType
+            Kernel = _kernel,
+            Arguments = new KernelArguments(new AzureOpenAIPromptExecutionSettings { ReasoningEffort = _reasoningEffort.ToString() })
         };
-        var factory = new ChatCompletionAgentFactory();
-        return factory.CreateAsync(_kernel, definition).GetAwaiter().GetResult();
     }
 }

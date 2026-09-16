@@ -35,6 +35,15 @@ public static class RepositoryExtensions
             .BindConfiguration(AzureDocumentIntelligenceSettings.SectionName)
             .ValidateDataAnnotations()
             .ValidateOnStart();
+        services.AddOptions<AgentSettings>(AnalystAgentFactory.AgentName)
+            .BindConfiguration(AgentSettings.SectionName(AnalystAgentFactory.AgentName))
+            .ValidateOnStart();
+        services.AddOptions<AgentSettings>(ArchitectAgentFactory.AgentName)
+            .BindConfiguration(AgentSettings.SectionName(ArchitectAgentFactory.AgentName))
+            .ValidateOnStart();
+        services.AddOptions<AgentSettings>(DeveloperAgentFactory.AgentName)
+            .BindConfiguration(AgentSettings.SectionName(DeveloperAgentFactory.AgentName))
+            .ValidateOnStart();
 
         // agents
         services.AddSingleton(_ =>
