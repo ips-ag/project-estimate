@@ -1,7 +1,8 @@
-﻿using Microsoft.SemanticKernel;
+using Microsoft.Extensions.Options;
+using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Agents;
-
-#pragma warning disable SKEXP0110
+using Microsoft.SemanticKernel.Connectors.AzureOpenAI;
+using ProjectEstimate.Repositories.Configuration;
 
 namespace ProjectEstimate.Repositories.Agents.Developer;
 
@@ -9,20 +10,21 @@ internal class DeveloperAgentFactory : IAgentFactory
 {
     public const string AgentName = "Developer";
     private readonly Kernel _kernel;
+    private readonly ReasoningEffort _reasoningEffort;
 
-    public DeveloperAgentFactory(Kernel kernel)
+    public DeveloperAgentFactory(Kernel kernel, IOptionsMonitor<AgentSettings> agentSettingsMonitor)
     {
         _kernel = kernel;
+        _reasoningEffort = agentSettingsMonitor.Get(AgentName).ReasoningEffort;
     }
 
     public Agent Create()
     {
-        var definition = new AgentDefinition
+        return new ChatCompletionAgent
         {
             Name = AgentName,
             Description =
                 "Developer agent for validating and correcting effort estimates for software project delivery.",
-            Metadata = new AgentMetadata { Authors = [AgentName] },
             Instructions =
                 """
                 You are an experienced software developer. You validate and create task estimates for project delivery, based on existing requirements, user-stories, and tasks.
@@ -52,13 +54,8 @@ internal class DeveloperAgentFactory : IAgentFactory
 
                 Do not answer requests that are not related to software project delivery estimation validation.
                 """,
-            Model = new ModelDefinition
-            {
-                Options = new Dictionary<string, object> { ["reasoning_effort"] = "low" }
-            },
-            Type = ChatCompletionAgentFactory.ChatCompletionAgentType
+            Kernel = _kernel,
+            Arguments = new KernelArguments(new AzureOpenAIPromptExecutionSettings { ReasoningEffort = _reasoningEffort.ToString() })
         };
-        var factory = new ChatCompletionAgentFactory();
-        return factory.CreateAsync(_kernel, definition).GetAwaiter().GetResult();
     }
 }

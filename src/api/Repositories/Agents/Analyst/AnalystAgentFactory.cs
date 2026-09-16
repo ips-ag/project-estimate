@@ -1,7 +1,8 @@
-﻿using Microsoft.SemanticKernel;
+using Microsoft.Extensions.Options;
+using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Agents;
-
-#pragma warning disable SKEXP0110
+using Microsoft.SemanticKernel.Connectors.AzureOpenAI;
+using ProjectEstimate.Repositories.Configuration;
 
 namespace ProjectEstimate.Repositories.Agents.Analyst;
 
@@ -9,19 +10,20 @@ internal class AnalystAgentFactory : IAgentFactory
 {
     public const string AgentName = "Analyst";
     private readonly Kernel _kernel;
+    private readonly ReasoningEffort _reasoningEffort;
 
-    public AnalystAgentFactory(Kernel kernel)
+    public AnalystAgentFactory(Kernel kernel, IOptionsMonitor<AgentSettings> agentSettingsMonitor)
     {
         _kernel = kernel;
+        _reasoningEffort = agentSettingsMonitor.Get(AgentName).ReasoningEffort;
     }
 
     public Agent Create()
     {
-        var definition = new AgentDefinition
+        return new ChatCompletionAgent
         {
             Name = AgentName,
             Description = "Analyst agent for verifying project requirements.",
-            Metadata = new AgentMetadata { Authors = [AgentName] },
             Instructions =
                 """
                 You are an experienced business analysts. You analyze and verify project requirements.
@@ -40,13 +42,8 @@ internal class AnalystAgentFactory : IAgentFactory
                 When requirements analysis is complete, and all questions are answered, say 'Requirement analysis complete'.
                 Do not answer requests that are not related to project requirements analysis.
                 """,
-            Model = new ModelDefinition
-            {
-                Options = new Dictionary<string, object> { ["reasoning_effort"] = "low" }
-            },
-            Type = ChatCompletionAgentFactory.ChatCompletionAgentType
+            Kernel = _kernel,
+            Arguments = new KernelArguments(new AzureOpenAIPromptExecutionSettings { ReasoningEffort = _reasoningEffort.ToString() })
         };
-        var factory = new ChatCompletionAgentFactory();
-        return factory.CreateAsync(_kernel, definition).GetAwaiter().GetResult();
     }
 }
