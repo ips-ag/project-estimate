@@ -60,6 +60,9 @@ resource foundryAccount 'Microsoft.CognitiveServices/accounts@2025-06-01' = {
   resource project 'projects' = {
     name: projectName
     location: location
+    identity: {
+      type: 'SystemAssigned'
+    }
     properties: {
       displayName: projectName
     }
