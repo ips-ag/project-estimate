@@ -5,29 +5,29 @@ __metadata:
   version: 10
   cacheKey: 10c0
 
-"@azure/msal-browser@npm:^5.21.0":
-  version: 5.21.0
-  resolution: "@azure/msal-browser@npm:5.21.0"
+"@azure/msal-browser@npm:^5.22.0":
+  version: 5.22.0
+  resolution: "@azure/msal-browser@npm:5.22.0"
   dependencies:
-    "@azure/msal-common": "npm:16.14.0"
-  checksum: 10c0/1150dce82dae9e0b8740f3ce58f1478a086ebcba5531b20a0a9a7aac73b93c9503d28dab38ad1957c80312629ee2d8ca093b77f7f552a81b9474a7b933b5d7a8
+    "@azure/msal-common": "npm:16.14.1"
+  checksum: 10c0/cf6ebacca643a153d7501794eae8a448ebfd8f015a7a88f47502bb8dd21ecc0d6bc2f539447875ed49910abe49b0dcc455ca8fc7f0ca41f6fec6e6aa5b297852
   languageName: node
   linkType: hard
 
-"@azure/msal-common@npm:16.14.0":
-  version: 16.14.0
-  resolution: "@azure/msal-common@npm:16.14.0"
-  checksum: 10c0/72f9786b23f727e730d24afc57fa69998be89464ed734153c36ccd0893eef4945b840a0ed0b325295fd497b633625217cebe60392b42f0bad7ad183f8bfa6bfe
+"@azure/msal-common@npm:16.14.1":
+  version: 16.14.1
+  resolution: "@azure/msal-common@npm:16.14.1"
+  checksum: 10c0/99abadb8ce40cf234e534776806e17a76904d9f99af069e20e6e7513cb3956428809672cb7fc2e1bde6ab0684b7027225514fe0d11671017b985ce7db8886087
   languageName: node
   linkType: hard
 
-"@azure/msal-react@npm:^5.7.0":
-  version: 5.7.0
-  resolution: "@azure/msal-react@npm:5.7.0"
+"@azure/msal-react@npm:^5.7.1":
+  version: 5.7.1
+  resolution: "@azure/msal-react@npm:5.7.1"
   peerDependencies:
-    "@azure/msal-browser": ^5.20.0
+    "@azure/msal-browser": ^5.22.0
     react: ^16.8.0 || ^17 || ^18 || ^19.2.1
-  checksum: 10c0/5776983b035b6ca9d32b20910abe239fb119cf504efae32d01cd84ae511264463d1b55c51dd41965b26bb0aa834e6861c47b80048ccc3741914f284db11f750a
+  checksum: 10c0/37530c4c91f16c244a23da6a7a2342b01b485173211dc94bbd4ead6c4d691aa978383c14757706f4154e46e4464d34acfbe9ecd81f93a6231f94c2538f875528
   languageName: node
   linkType: hard
 
@@ -690,12 +690,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:^26.5.1":
-  version: 26.5.1
-  resolution: "@types/node@npm:26.5.1"
+"@types/node@npm:^26.6.2":
+  version: 26.6.2
+  resolution: "@types/node@npm:26.6.2"
   dependencies:
     undici-types: "npm:~8.9.0"
-  checksum: 10c0/40aa7aa4c099c8a08bf39b5bcb15eaf2cc073666c2191b1d9ac8243ce6b68b23ace904a044c521f6d310b70e94514b531be5f4fc184f141a7ce7f0679ebc7bb3
+  checksum: 10c0/bb411ff5863a79a28ffa4ebadf2499d44046aa114d25a7a6c78f57def118123a0a7dea99e8fe38849099e9dba2b41b8853a7a282037618559f58653c35e7c5c5
   languageName: node
   linkType: hard
 
@@ -1165,18 +1165,18 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "app@workspace:."
   dependencies:
-    "@azure/msal-browser": "npm:^5.21.0"
-    "@azure/msal-react": "npm:^5.7.0"
+    "@azure/msal-browser": "npm:^5.22.0"
+    "@azure/msal-react": "npm:^5.7.1"
     "@eslint/js": "npm:^10.0.1"
     "@microsoft/signalr": "npm:^10.0.11"
-    "@types/node": "npm:^26.5.1"
+    "@types/node": "npm:^26.6.2"
     "@types/react": "npm:^19.3.0"
     "@types/react-dom": "npm:^19.3.0"
     "@typescript/native": "npm:typescript@^7.0.2"
     "@vitejs/plugin-react": "npm:^6.1.1"
-    eslint: "npm:^10.10.0"
+    eslint: "npm:^10.11.0"
     eslint-plugin-react-hooks: "npm:^7.1.1"
-    eslint-plugin-react-refresh: "npm:^0.5.6"
+    eslint-plugin-react-refresh: "npm:^0.5.7"
     globals: "npm:^17.12.0"
     react: "npm:^19.3.0"
     react-dom: "npm:^19.3.0"
@@ -1430,12 +1430,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-plugin-react-refresh@npm:^0.5.6":
-  version: 0.5.6
-  resolution: "eslint-plugin-react-refresh@npm:0.5.6"
+"eslint-plugin-react-refresh@npm:^0.5.7":
+  version: 0.5.7
+  resolution: "eslint-plugin-react-refresh@npm:0.5.7"
   peerDependencies:
     eslint: ^9 || ^10
-  checksum: 10c0/4b5a91495392d629047718727163e5282bb4908ce7e83c2f95be890a356b123ec73a3fc5dd3f82e0623cbcc1091345de69053c971db2bbd06e3775b64600452f
+  checksum: 10c0/e9de48cd59170e65d0bb3abe4cc6d3a41087ff5d5bd191f87ce8b90fb5a43100ab4ded040dc6b53a6ef175e15945d5586ffca67be68f69e2a6014010f1760cb3
   languageName: node
   linkType: hard
 
@@ -1465,9 +1465,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint@npm:^10.10.0":
-  version: 10.10.0
-  resolution: "eslint@npm:10.10.0"
+"eslint@npm:^10.11.0":
+  version: 10.11.0
+  resolution: "eslint@npm:10.11.0"
   dependencies:
     "@eslint-community/eslint-utils": "npm:^4.8.0"
     "@eslint-community/regexpp": "npm:^4.12.2"
@@ -1506,7 +1506,7 @@ __metadata:
       optional: true
   bin:
     eslint: bin/eslint.js
-  checksum: 10c0/ba583145305f088585f91c5dab6825492ec657614558e4610cffc94174cf800f456e39ec3cafd3eed73e04bd9a05794067ae33b553f1323e3e7c1157242409d2
+  checksum: 10c0/c767f45f21d1921b41d70e30b1c8fa7ec4e65c0f43a8d80cc4990ca3d923127fa7b9b3416b8f5be6e877d9286f97d3c51a04ed341bc6aa73c0dba0f463e1f861
   languageName: node
   linkType: hard
 
