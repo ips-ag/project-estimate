@@ -39,6 +39,29 @@ public class AgentGroupChatManager : GroupChatManager
         return ValueTask.FromResult(false);
     }
 
+    protected override ValueTask<IEnumerable<ChatMessage>> UpdateHistoryAsync(
+        IReadOnlyList<ChatMessage> history,
+        CancellationToken cancellationToken = new())
+    {
+        List<ChatMessage> filtered = [];
+        foreach (var message in history)
+        {
+            var contents = message.Contents
+                .Where(c => c is not FunctionCallContent and not FunctionResultContent)
+                .ToList();
+            if (contents.Count == 0) continue;
+            if (contents.Count == message.Contents.Count)
+            {
+                filtered.Add(message);
+                continue;
+            }
+            var clone = message.Clone();
+            clone.Contents = contents;
+            filtered.Add(clone);
+        }
+        return ValueTask.FromResult<IEnumerable<ChatMessage>>(filtered);
+    }
+
     protected override ValueTask<AIAgent> SelectNextAgentAsync(
         IReadOnlyList<ChatMessage> history,
         CancellationToken cancellationToken = new())
