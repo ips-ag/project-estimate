@@ -1,5 +1,8 @@
 ﻿using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
+using Microsoft.Extensions.Options;
+using ProjectEstimate.Repositories.Configuration;
+using ReasoningEffort = ProjectEstimate.Repositories.Configuration.ReasoningEffort;
 
 namespace ProjectEstimate.Repositories.Agents.Architect;
 
@@ -9,12 +12,15 @@ internal class ArchitectAgentFactory : IAgentFactory
     private readonly IChatClient _chatClient;
     private readonly ILoggerFactory _loggerFactory;
     private readonly IServiceProvider _serviceProvider;
+    private readonly ReasoningEffort _reasoningEffort;
 
-    public ArchitectAgentFactory(IChatClient chatClient, ILoggerFactory loggerFactory, IServiceProvider serviceProvider)
+    public ArchitectAgentFactory(IChatClient chatClient, ILoggerFactory loggerFactory, IServiceProvider serviceProvider,
+        IOptionsMonitor<AgentSettings> agentSettingsMonitor)
     {
         _chatClient = chatClient;
         _loggerFactory = loggerFactory;
         _serviceProvider = serviceProvider;
+        _reasoningEffort = agentSettingsMonitor.Get(AgentName).ReasoningEffort;
     }
 
     public AIAgent Create()
@@ -26,6 +32,7 @@ internal class ArchitectAgentFactory : IAgentFactory
                 "Architect agent for creating use-cases, breaking them into tasks, and estimating task delivery effort.",
             ChatOptions = new ChatOptions
             {
+                RawRepresentationFactory = AgentChatOptions.ReasoningEffortFactory(_reasoningEffort),
                 Instructions =
                     """
                     Assistant is an experienced software architects. It estimates effort needed for project delivery, based on requirements.

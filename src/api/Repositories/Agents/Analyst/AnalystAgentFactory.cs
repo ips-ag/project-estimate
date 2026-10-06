@@ -1,5 +1,8 @@
 ﻿using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
+using Microsoft.Extensions.Options;
+using ProjectEstimate.Repositories.Configuration;
+using ReasoningEffort = ProjectEstimate.Repositories.Configuration.ReasoningEffort;
 
 namespace ProjectEstimate.Repositories.Agents.Analyst;
 
@@ -9,12 +12,15 @@ internal class AnalystAgentFactory : IAgentFactory
     private readonly IChatClient _chatClient;
     private readonly ILoggerFactory _loggerFactory;
     private readonly IServiceProvider _serviceProvider;
+    private readonly ReasoningEffort _reasoningEffort;
 
-    public AnalystAgentFactory(IChatClient chatClient, ILoggerFactory loggerFactory, IServiceProvider serviceProvider)
+    public AnalystAgentFactory(IChatClient chatClient, ILoggerFactory loggerFactory, IServiceProvider serviceProvider,
+        IOptionsMonitor<AgentSettings> agentSettingsMonitor)
     {
         _chatClient = chatClient;
         _loggerFactory = loggerFactory;
         _serviceProvider = serviceProvider;
+        _reasoningEffort = agentSettingsMonitor.Get(AgentName).ReasoningEffort;
     }
 
     public AIAgent Create()
@@ -28,6 +34,7 @@ internal class AnalystAgentFactory : IAgentFactory
             Description = description,
             ChatOptions = new ChatOptions
             {
+                RawRepresentationFactory = AgentChatOptions.ReasoningEffortFactory(_reasoningEffort),
                 Instructions = instructions
             }
             // """

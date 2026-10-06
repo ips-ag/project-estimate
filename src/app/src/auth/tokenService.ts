@@ -1,11 +1,8 @@
-import { PublicClientApplication, SilentRequest } from "@azure/msal-browser";
-import { msalConfig } from "./authConfig";
+import { SilentRequest } from "@azure/msal-browser";
+import { msalInstance } from "./msalInstance";
 
 export const getAccessToken = async (): Promise<string> => {
   try {
-    const msalInstance = new PublicClientApplication(msalConfig);
-    await msalInstance.initialize();
-
     const accounts = msalInstance.getAllAccounts();
     if (accounts.length === 0) {
       console.error("No accounts found in MSAL");

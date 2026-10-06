@@ -27,8 +27,8 @@ public static class RepositoryExtensions
             .BindConfiguration(AzureStorageAccountSettings.SectionName)
             .ValidateDataAnnotations()
             .ValidateOnStart();
-        services.AddOptions<AzureOpenAiSettings>()
-            .BindConfiguration(AzureOpenAiSettings.SectionName)
+        services.AddOptions<AzureFoundrySettings>()
+            .BindConfiguration(AzureFoundrySettings.SectionName)
             .ValidateDataAnnotations()
             .ValidateOnStart();
         services.AddOptions<AzureDocumentIntelligenceSettings>()
@@ -48,7 +48,7 @@ public static class RepositoryExtensions
         services.AddHostedService<AgentBackgroundService>();
         services.AddScoped(sp =>
         {
-            var options = sp.GetRequiredService<IOptions<AzureOpenAiSettings>>().Value;
+            var options = sp.GetRequiredService<IOptions<AzureFoundrySettings>>().Value;
             var loggerFactory = sp.GetRequiredService<ILoggerFactory>();
             var openAiClient = new AzureOpenAIClient(
                 new Uri(options.Endpoint),

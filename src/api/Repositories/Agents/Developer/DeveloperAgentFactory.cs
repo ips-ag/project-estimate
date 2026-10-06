@@ -1,5 +1,8 @@
 ﻿using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
+using Microsoft.Extensions.Options;
+using ProjectEstimate.Repositories.Configuration;
+using ReasoningEffort = ProjectEstimate.Repositories.Configuration.ReasoningEffort;
 
 namespace ProjectEstimate.Repositories.Agents.Developer;
 
@@ -9,12 +12,15 @@ internal class DeveloperAgentFactory : IAgentFactory
     private readonly IChatClient _chatClient;
     private readonly ILoggerFactory _loggerFactory;
     private readonly IServiceProvider _serviceProvider;
+    private readonly ReasoningEffort _reasoningEffort;
 
-    public DeveloperAgentFactory(IChatClient chatClient, ILoggerFactory loggerFactory, IServiceProvider serviceProvider)
+    public DeveloperAgentFactory(IChatClient chatClient, ILoggerFactory loggerFactory, IServiceProvider serviceProvider,
+        IOptionsMonitor<AgentSettings> agentSettingsMonitor)
     {
         _chatClient = chatClient;
         _loggerFactory = loggerFactory;
         _serviceProvider = serviceProvider;
+        _reasoningEffort = agentSettingsMonitor.Get(AgentName).ReasoningEffort;
     }
 
     public AIAgent Create()
@@ -26,6 +32,7 @@ internal class DeveloperAgentFactory : IAgentFactory
                 "Developer agent for validating and correcting effort estimates for software project delivery.",
             ChatOptions = new ChatOptions
             {
+                RawRepresentationFactory = AgentChatOptions.ReasoningEffortFactory(_reasoningEffort),
                 Instructions =
                     """
                     You are an experienced software developer. You validate and create task estimates for project delivery, based on existing requirements, user-stories, and tasks.
