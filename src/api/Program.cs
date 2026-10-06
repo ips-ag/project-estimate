@@ -1,6 +1,4 @@
-using Microsoft.ApplicationInsights.Extensibility;
 using ProjectEstimate.Application.Extensions;
-using ProjectEstimate.Extensions.ApplicationInsights;
 using ProjectEstimate.Extensions.Cors;
 using ProjectEstimate.Extensions.Security;
 using ProjectEstimate.Repositories.Extensions;
@@ -21,7 +19,6 @@ try
     builder.Services.AddOpenApi();
     builder.Services.AddApplicationInsightsTelemetry();
     builder.Services.AddSignalR();
-    builder.Services.AddSingleton<ITelemetryInitializer, ExceptionSamplingRateTelemetryInitializer>();
     builder.Services.ConfigureAuthentication();
     builder.Services.ConfigureCors();
     builder.Services.AddApplication();

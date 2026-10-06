@@ -69,6 +69,6 @@ resource foundryAccount 'Microsoft.CognitiveServices/accounts@2025-06-01' = {
   }
 }
 
-output endpoint string = foundryAccount.properties.endpoint
+output endpoint string = 'https://${foundryAccount.properties.customSubDomainName}.services.ai.azure.com/openai/v1'
 #disable-next-line outputs-should-not-contain-secrets
 output apiKey string = foundryAccount.listKeys().key1

@@ -1,47 +1,43 @@
-﻿using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.Agents;
-using Microsoft.SemanticKernel.Agents.Orchestration.GroupChat;
-using Microsoft.SemanticKernel.Agents.Runtime.InProcess;
-using Microsoft.SemanticKernel.ChatCompletion;
+﻿using System.Text;
+using Microsoft.Agents.AI;
+using Microsoft.Agents.AI.Workflows;
+using Microsoft.Extensions.AI;
 using ProjectEstimate.Domain;
 using ProjectEstimate.Repositories.Agents.Analyst;
 using ProjectEstimate.Repositories.Agents.Architect;
 using ProjectEstimate.Repositories.Agents.Developer;
+using ProjectEstimate.Repositories.Agents.Tools;
 using ProjectEstimate.Repositories.Documents;
 using ProjectEstimate.Repositories.Hubs;
-
-#pragma warning disable SKEXP0110
-
-#pragma warning disable SKEXP0001
 
 namespace ProjectEstimate.Repositories.Agents.Consultant;
 
 internal class ConsultantAgent
 {
-    private readonly Agent _analystAgent;
-    private readonly Agent _architectAgent;
-    private readonly Agent _developerAgent;
+    private readonly AIAgent _analystAgent;
+    private readonly AIAgent _architectAgent;
+    private readonly AIAgent _developerAgent;
     private readonly IUserInteraction _userInteraction;
     private readonly IDocumentRepository _documentRepository;
-    private readonly ILoggerFactory _loggerFactory;
+    private readonly ILogger<ConsultantAgent> _logger;
 
     public ConsultantAgent(
         [FromKeyedServices(AnalystAgentFactory.AgentName)]
-        Agent analystAgent,
+        AIAgent analystAgent,
         [FromKeyedServices(ArchitectAgentFactory.AgentName)]
-        Agent architectAgent,
+        AIAgent architectAgent,
         [FromKeyedServices(DeveloperAgentFactory.AgentName)]
-        Agent developerAgent,
+        AIAgent developerAgent,
         IUserInteraction userInteraction,
         IDocumentRepository documentRepository,
-        ILoggerFactory loggerFactory)
+        ILogger<ConsultantAgent> logger)
     {
         _analystAgent = analystAgent;
         _architectAgent = architectAgent;
         _developerAgent = developerAgent;
         _userInteraction = userInteraction;
         _documentRepository = documentRepository;
-        _loggerFactory = loggerFactory;
+        _logger = logger;
     }
 
     /// <summary>
@@ -49,12 +45,10 @@ internal class ConsultantAgent
     /// </summary>
     /// <param name="request"></param>
     /// <param name="cancellationToken"></param>
-    public async ValueTask<string?> ExecuteAsync(ChatCompletionRequest request, CancellationToken cancellationToken)
+    public async ValueTask ExecuteAsync(ChatCompletionRequest request, CancellationToken cancellationToken)
     {
         string? userInput = request.Prompt;
         string? fileInput = await _documentRepository.ReadDocumentAsync(request.FileLocation, cancellationToken);
-        // TODO: get history from repository
-        ChatHistory history = [];
         var userMessage =
             $"""
              User prompt:
@@ -62,66 +56,124 @@ internal class ConsultantAgent
              Additional context:
              \"\"\"{fileInput}\"\"\"
              """;
-
-        async ValueTask ResponseCallback(ChatMessageContent message)
+        // TODO: get history from repository
+        List<ChatMessage> history = [new(ChatRole.User, userMessage)];
+        var workflow =  AgentWorkflowBuilder
+            .CreateGroupChatBuilderWith(agents => new AgentGroupChatManager(agents))
+            .AddParticipants(_analystAgent, _architectAgent, _developerAgent)
+            .Build();
+        await using var run = await InProcessExecution.RunStreamingAsync(
+            workflow: workflow,
+            input: history,
+            cancellationToken: cancellationToken);
+        await run.TrySendMessageAsync(new TurnToken(emitEvents: true));
+        string? lastExecutorId = null;
+        var assistant = "Assistant";
+        StringBuilder messageBuilder = new();
+        await foreach (var evt in run.WatchStreamAsync(cancellationToken).ConfigureAwait(false))
         {
-            history.Add(message);
-            string assistant = message.AuthorName ?? message.Role.Label;
-            string content = message.Content?.Trim() ?? string.Empty;
-            if (DeveloperAgentFactory.AgentName == assistant)
+            switch (evt)
             {
-                await _userInteraction.MessageOutputAsync(
-                    assistant: assistant,
-                    message: content,
-                    conversationEnd: true,
-                    cancel: cancellationToken);
-                return;
-            }
-            bool isReasoning = AnalystAgentFactory.AgentName != assistant;
-            if (isReasoning)
-            {
-                await _userInteraction.ReasoningOutputAsync(
-                    assistant: assistant,
-                    message: content,
-                    cancel: cancellationToken);
-            }
-            else
-            {
-                await _userInteraction.MessageOutputAsync(
-                    assistant: assistant,
-                    message: content,
-                    conversationEnd: false,
-                    cancel: cancellationToken);
+                // agent processing finished
+                case AgentResponseUpdateEvent e:
+                {
+                    string tokens = e.Update.Text;
+                    if (string.IsNullOrEmpty(tokens) && e.Update.Contents.Count == 0) continue;
+                    if (e.ExecutorId != lastExecutorId)
+                    {
+                        if (messageBuilder.Length > 0)
+                        {
+                            var message = messageBuilder.ToString();
+                            await _userInteraction.MessageOutputAsync(
+                                assistant: assistant,
+                                message: message,
+                                conversationEnd: false,
+                                cancel: cancellationToken);
+                        }
+                        lastExecutorId = e.ExecutorId;
+                        messageBuilder.Clear();
+                    }
+                    assistant = e.Update.AuthorName ?? e.Update.Role?.Value ?? "Assistant";
+                    messageBuilder.Append(tokens);
+                    break;
+                }
+                case RequestInfoEvent info:
+                {
+                    if (messageBuilder.Length > 0)
+                    {
+                        await _userInteraction.MessageOutputAsync(
+                            assistant: assistant,
+                            message: messageBuilder.ToString(),
+                            conversationEnd: false,
+                            cancel: cancellationToken);
+                        messageBuilder.Clear();
+                    }
+                    var response = await HandleRequestAsync(info.Request, assistant, cancellationToken);
+                    await run.SendResponseAsync(response);
+                    break;
+                }
+                // conversation end
+                case WorkflowOutputEvent output:
+                {
+                    var chatMessages = output.As<List<ChatMessage>>()!;
+                    var lastMessage = chatMessages.Last();
+                    string message = lastMessage.Text;
+                    assistant = lastMessage.AuthorName ?? lastMessage.Role.Value;
+                    await _userInteraction.MessageOutputAsync(
+                        assistant: assistant,
+                        message: message,
+                        conversationEnd: true,
+                        cancel: cancellationToken);
+                    break;
+                }
+                // workflow error
+                case WorkflowErrorEvent error:
+                {
+                    await _userInteraction.MessageOutputAsync(
+                        assistant: assistant,
+                        message: "Encountered an error",
+                        conversationEnd: true,
+                        cancel: cancellationToken);
+                    var ex = error.Data as Exception;
+                    _logger.LogWarning(ex, "Workflow error");
+                    break;
+                }
             }
         }
+    }
 
-        async ValueTask<ChatMessageContent> InteractiveCallback()
+    private async ValueTask<ExternalResponse> HandleRequestAsync(
+        ExternalRequest request,
+        string assistant,
+        CancellationToken cancellationToken)
+    {
+        if (request.TryGetDataAs(out FunctionCallContent? call))
         {
-            var lastMessage = history.LastOrDefault();
-            string? question = lastMessage?.Content;
-            string? answer = null;
-            if (question is not null)
+            if (AskUserTool.Name != call.Name)
             {
-                answer = await _userInteraction.GetAnswerAsync(cancel: cancellationToken);
+                _logger.LogWarning("Unsupported function call request {FunctionName}", call.Name);
+                return request.CreateResponse(
+                    new FunctionResultContent(call.CallId, $"Tool '{call.Name}' is not available."));
             }
-            ChatMessageContent input = new(role: AuthorRole.User, content: answer)
-            {
-                AuthorName = AuthorRole.User.Label
-            };
-            return input;
+            object? questionArgument = null;
+            call.Arguments?.TryGetValue(AskUserTool.QuestionParameter, out questionArgument);
+            string question = questionArgument?.ToString() ?? string.Empty;
+            // asking agent is the last one which streamed output, fall back to the port id: {executorId}_FunctionCall
+            string asker = assistant != "Assistant" ? assistant : request.PortInfo.PortId.Split('_')[0];
+            await _userInteraction.MessageOutputAsync(
+                assistant: asker,
+                message: question,
+                conversationEnd: false,
+                cancel: cancellationToken);
+            string? answer = await _userInteraction.GetAnswerAsync(cancel: cancellationToken);
+            return request.CreateResponse(new FunctionResultContent(call.CallId, answer ?? "No answer provided"));
         }
-
-        AgentGroupChatManager chatManager = new(history) { InteractiveCallback = InteractiveCallback };
-        GroupChatOrchestration orchestration = new(chatManager, _analystAgent, _architectAgent, _developerAgent)
+        if (request.TryGetDataAs(out ToolApprovalRequestContent? approval))
         {
-            LoggerFactory = _loggerFactory, ResponseCallback = ResponseCallback
-        };
-        InProcessRuntime runtime = new();
-        await runtime.StartAsync(cancellationToken);
-        var result = await orchestration.InvokeAsync(userMessage, runtime, cancellationToken);
-        string output = await result.GetValueAsync(cancellationToken: cancellationToken);
-        await runtime.RunUntilIdleAsync();
-        return output;
+            _logger.LogWarning("Tool approval is not supported, denying request");
+            return request.CreateResponse(approval.CreateResponse(approved: false, reason: "Approval is not supported."));
+        }
+        throw new InvalidOperationException($"Unsupported workflow request from port {request.PortInfo.PortId}");
     }
 
     public async ValueTask<string?> UploadFileAsync(UserFile file, CancellationToken cancel)

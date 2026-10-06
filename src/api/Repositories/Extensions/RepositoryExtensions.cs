@@ -1,10 +1,10 @@
-﻿using System.Threading.Channels;
+﻿using System.ClientModel;
+using System.ClientModel.Primitives;
+using System.Threading.Channels;
+using Microsoft.Agents.AI;
+using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Options;
-using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.Agents;
-using Microsoft.SemanticKernel.ChatCompletion;
-using Microsoft.SemanticKernel.Connectors.AzureOpenAI;
-using Microsoft.SemanticKernel.TextGeneration;
+using OpenAI;
 using ProjectEstimate.Repositories.Agents;
 using ProjectEstimate.Repositories.Agents.Analyst;
 using ProjectEstimate.Repositories.Agents.Architect;
@@ -55,24 +55,31 @@ public static class RepositoryExtensions
             return Channel.CreateBounded<ChatCompletionRequestModel>(options);
         });
         services.AddHostedService<AgentBackgroundService>();
-        Func<IServiceProvider, AzureOpenAIChatCompletionService> azureFoundryFactory = sp =>
+        services.AddScoped(sp =>
         {
             var options = sp.GetRequiredService<IOptions<AzureFoundrySettings>>().Value;
             var loggerFactory = sp.GetRequiredService<ILoggerFactory>();
-            return new AzureOpenAIChatCompletionService(
-                options.DeploymentName,
-                options.Endpoint,
-                options.ApiKey,
-                loggerFactory: loggerFactory);
-        };
-        services.AddScoped<IChatCompletionService>(azureFoundryFactory);
-        services.AddScoped<ITextGenerationService>(azureFoundryFactory);
-        services.AddTransient<Kernel>(sp => new Kernel(sp));
+            var openAiClient = new OpenAIClient(
+                new ApiKeyCredential(options.ApiKey),
+                new OpenAIClientOptions
+                {
+                    Endpoint = new Uri(options.Endpoint),
+                    ClientLoggingOptions = new ClientLoggingOptions
+                    {
+                        LoggerFactory = loggerFactory,
+                        EnableLogging = true,
+                        EnableMessageLogging = true,
+                        EnableMessageContentLogging = true
+                    }
+                });
+            var chatClient = openAiClient.GetChatClient(options.DeploymentName);
+            return chatClient.AsIChatClient();
+        });
         //// consultant
         services.AddScoped<ConsultantAgent>();
         //// analyst
         services.AddScoped<AnalystAgentFactory>();
-        services.AddKeyedScoped<Agent>(
+        services.AddKeyedScoped<AIAgent>(
             AnalystAgentFactory.AgentName,
             (sp, _) =>
             {
@@ -81,7 +88,7 @@ public static class RepositoryExtensions
             });
         //// architect
         services.AddScoped<ArchitectAgentFactory>();
-        services.AddKeyedScoped<Agent>(
+        services.AddKeyedScoped<AIAgent>(
             ArchitectAgentFactory.AgentName,
             (sp, _) =>
             {
@@ -90,7 +97,7 @@ public static class RepositoryExtensions
             });
         //// developer
         services.AddScoped<DeveloperAgentFactory>();
-        services.AddKeyedScoped<Agent>(
+        services.AddKeyedScoped<AIAgent>(
             DeveloperAgentFactory.AgentName,
             (sp, _) =>
             {
