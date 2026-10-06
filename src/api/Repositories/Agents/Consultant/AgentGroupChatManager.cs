@@ -49,6 +49,8 @@ public class AgentGroupChatManager : GroupChatManager
             var lastMessageAuthor = lastMessage.AuthorName ?? lastMessage.Role.Value;
             if ("user".Equals(lastMessageAuthor, StringComparison.OrdinalIgnoreCase))
             {
+                var analystIndex = _agents.ToList().FindIndex(a => AnalystAgentFactory.AgentName.Equals(a.Name));
+                _currentAgentIndex = (analystIndex + 1) % _agents.Count;
                 return GetAgentAsync(AnalystAgentFactory.AgentName);
             }
         }

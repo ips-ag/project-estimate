@@ -1,10 +1,10 @@
-﻿using System.ClientModel.Primitives;
+﻿using System.ClientModel;
+using System.ClientModel.Primitives;
 using System.Threading.Channels;
-using Azure;
-using Azure.AI.OpenAI;
 using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Options;
+using OpenAI;
 using ProjectEstimate.Repositories.Agents;
 using ProjectEstimate.Repositories.Agents.Analyst;
 using ProjectEstimate.Repositories.Agents.Architect;
@@ -35,6 +35,15 @@ public static class RepositoryExtensions
             .BindConfiguration(AzureDocumentIntelligenceSettings.SectionName)
             .ValidateDataAnnotations()
             .ValidateOnStart();
+        services.AddOptions<AgentSettings>(AnalystAgentFactory.AgentName)
+            .BindConfiguration(AgentSettings.SectionName(AnalystAgentFactory.AgentName))
+            .ValidateOnStart();
+        services.AddOptions<AgentSettings>(ArchitectAgentFactory.AgentName)
+            .BindConfiguration(AgentSettings.SectionName(ArchitectAgentFactory.AgentName))
+            .ValidateOnStart();
+        services.AddOptions<AgentSettings>(DeveloperAgentFactory.AgentName)
+            .BindConfiguration(AgentSettings.SectionName(DeveloperAgentFactory.AgentName))
+            .ValidateOnStart();
 
         // agents
         services.AddSingleton(_ =>
@@ -50,11 +59,11 @@ public static class RepositoryExtensions
         {
             var options = sp.GetRequiredService<IOptions<AzureFoundrySettings>>().Value;
             var loggerFactory = sp.GetRequiredService<ILoggerFactory>();
-            var openAiClient = new AzureOpenAIClient(
-                new Uri(options.Endpoint),
-                new AzureKeyCredential(options.ApiKey),
-                new AzureOpenAIClientOptions
+            var openAiClient = new OpenAIClient(
+                new ApiKeyCredential(options.ApiKey),
+                new OpenAIClientOptions
                 {
+                    Endpoint = new Uri(options.Endpoint),
                     ClientLoggingOptions = new ClientLoggingOptions
                     {
                         LoggerFactory = loggerFactory,

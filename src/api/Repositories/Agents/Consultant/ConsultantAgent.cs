@@ -6,6 +6,7 @@ using ProjectEstimate.Domain;
 using ProjectEstimate.Repositories.Agents.Analyst;
 using ProjectEstimate.Repositories.Agents.Architect;
 using ProjectEstimate.Repositories.Agents.Developer;
+using ProjectEstimate.Repositories.Agents.Tools;
 using ProjectEstimate.Repositories.Documents;
 using ProjectEstimate.Repositories.Hubs;
 
@@ -57,64 +58,10 @@ internal class ConsultantAgent
              """;
         // TODO: get history from repository
         List<ChatMessage> history = [new(ChatRole.User, userMessage)];
-        // async ValueTask ResponseCallback(ChatMessageContent message)
-        // {
-        //     history.Add(message);
-        //     string assistant = message.AuthorName ?? message.Role.Label;
-        //     string content = message.Content?.Trim() ?? string.Empty;
-        //     if (DeveloperAgentFactory.AgentName == assistant)
-        //     {
-        //         await _userInteraction.MessageOutputAsync(
-        //             assistant: assistant,
-        //             message: content,
-        //             conversationEnd: true,
-        //             cancel: cancellationToken);
-        //         return;
-        //     }
-        //     bool isReasoning = AnalystAgentFactory.AgentName != assistant;
-        //     if (isReasoning)
-        //     {
-        //         await _userInteraction.ReasoningOutputAsync(
-        //             assistant: assistant,
-        //             message: content,
-        //             cancel: cancellationToken);
-        //     }
-        //     else
-        //     {
-        //         await _userInteraction.MessageOutputAsync(
-        //             assistant: assistant,
-        //             message: content,
-        //             conversationEnd: false,
-        //             cancel: cancellationToken);
-        //     }
-        // }
-        //
-        // async ValueTask<ChatMessageContent> InteractiveCallback()
-        // {
-        //     var lastMessage = history.LastOrDefault();
-        //     string? question = lastMessage?.Content;
-        //     string? answer = null;
-        //     if (question is not null)
-        //     {
-        //         answer = await _userInteraction.GetAnswerAsync(cancel: cancellationToken);
-        //     }
-        //     ChatMessageContent input = new(role: AuthorRole.User, content: answer)
-        //     {
-        //         AuthorName = AuthorRole.User.Label
-        //     };
-        //     return input;
-        // }
-
-        //AgentGroupChatManager chatManager = new(history) { InteractiveCallback = InteractiveCallback };
-        RequestPort answerPort = RequestPort.Create<string, string>("UserAnswer");
         var workflow =  AgentWorkflowBuilder
             .CreateGroupChatBuilderWith(agents => new AgentGroupChatManager(agents))
             .AddParticipants(_analystAgent, _architectAgent, _developerAgent)
             .Build();
-        // GroupChatOrchestration orchestration = new(chatManager, _analystAgent, _architectAgent, _developerAgent)
-        // {
-        //     LoggerFactory = _loggerFactory, ResponseCallback = ResponseCallback
-        // };
         await using var run = await InProcessExecution.RunStreamingAsync(
             workflow: workflow,
             input: history,
@@ -152,9 +99,16 @@ internal class ConsultantAgent
                 }
                 case RequestInfoEvent info:
                 {
-                    info.Request.TryGetDataAs(out string? question);
-                    string? answer = await _userInteraction.GetAnswerAsync(cancel: cancellationToken);
-                    var response = info.Request.CreateResponse(answer);
+                    if (messageBuilder.Length > 0)
+                    {
+                        await _userInteraction.MessageOutputAsync(
+                            assistant: assistant,
+                            message: messageBuilder.ToString(),
+                            conversationEnd: false,
+                            cancel: cancellationToken);
+                        messageBuilder.Clear();
+                    }
+                    var response = await HandleRequestAsync(info.Request, assistant, cancellationToken);
                     await run.SendResponseAsync(response);
                     break;
                 }
@@ -186,11 +140,40 @@ internal class ConsultantAgent
                 }
             }
         }
-        // InProcessRuntime runtime = new();
-        // await runtime.StartAsync(cancellationToken);
-        // var result = await orchestration.InvokeAsync(userMessage, runtime, cancellationToken);
-        // string output = await result.GetValueAsync(cancellationToken: cancellationToken);
-        // await runtime.RunUntilIdleAsync();
+    }
+
+    private async ValueTask<ExternalResponse> HandleRequestAsync(
+        ExternalRequest request,
+        string assistant,
+        CancellationToken cancellationToken)
+    {
+        if (request.TryGetDataAs(out FunctionCallContent? call))
+        {
+            if (AskUserTool.Name != call.Name)
+            {
+                _logger.LogWarning("Unsupported function call request {FunctionName}", call.Name);
+                return request.CreateResponse(
+                    new FunctionResultContent(call.CallId, $"Tool '{call.Name}' is not available."));
+            }
+            object? questionArgument = null;
+            call.Arguments?.TryGetValue(AskUserTool.QuestionParameter, out questionArgument);
+            string question = questionArgument?.ToString() ?? string.Empty;
+            // asking agent is the last one which streamed output, fall back to the port id: {executorId}_FunctionCall
+            string asker = assistant != "Assistant" ? assistant : request.PortInfo.PortId.Split('_')[0];
+            await _userInteraction.MessageOutputAsync(
+                assistant: asker,
+                message: question,
+                conversationEnd: false,
+                cancel: cancellationToken);
+            string? answer = await _userInteraction.GetAnswerAsync(cancel: cancellationToken);
+            return request.CreateResponse(new FunctionResultContent(call.CallId, answer ?? "No answer provided"));
+        }
+        if (request.TryGetDataAs(out ToolApprovalRequestContent? approval))
+        {
+            _logger.LogWarning("Tool approval is not supported, denying request");
+            return request.CreateResponse(approval.CreateResponse(approved: false, reason: "Approval is not supported."));
+        }
+        throw new InvalidOperationException($"Unsupported workflow request from port {request.PortInfo.PortId}");
     }
 
     public async ValueTask<string?> UploadFileAsync(UserFile file, CancellationToken cancel)
