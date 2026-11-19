@@ -529,16 +529,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@microsoft/signalr@npm:^10.0.11":
-  version: 10.0.11
-  resolution: "@microsoft/signalr@npm:10.0.11"
+"@microsoft/signalr@npm:^11.0.0":
+  version: 11.0.0
+  resolution: "@microsoft/signalr@npm:11.0.0"
   dependencies:
     abort-controller: "npm:^3.0.0"
     eventsource: "npm:^2.0.2"
     fetch-cookie: "npm:^2.0.3"
     node-fetch: "npm:^2.6.7"
     ws: "npm:^7.5.10"
-  checksum: 10c0/9b0c54b61d850dc5e4bbd2526b7f07434088ef89629d19d78e43f95c1aa6e379d377a0765078261091bbcdb23f54b7c700958f20c5496133ed79f84402f7721a
+  checksum: 10c0/30a6cbedfc50d8a0351a9d6975d5af42d978556b765ee4acb08162982ac60cc513f135ffd8c04fc5b744e442780819942964e04ff289f3278e0cdc101e461f74
   languageName: node
   linkType: hard
 
@@ -1235,7 +1235,7 @@ __metadata:
     "@azure/msal-browser": "npm:^5.29.1"
     "@azure/msal-react": "npm:^5.8.2"
     "@eslint/js": "npm:^10.0.1"
-    "@microsoft/signalr": "npm:^10.0.11"
+    "@microsoft/signalr": "npm:^11.0.0"
     "@types/node": "npm:^26.6.6"
     "@types/react": "npm:^19.3.0"
     "@types/react-dom": "npm:^19.3.0"
