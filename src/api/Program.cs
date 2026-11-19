@@ -1,3 +1,4 @@
+using Azure.Monitor.OpenTelemetry.AspNetCore;
 using ProjectEstimate.Application.Extensions;
 using ProjectEstimate.Extensions.Cors;
 using ProjectEstimate.Extensions.Security;
@@ -12,12 +13,18 @@ try
 {
     var builder = WebApplication.CreateBuilder(args);
     builder.Configuration.AddJsonFile("secrets.json", optional: true, reloadOnChange: true);
-    builder.Host.UseSerilog((context, configuration) =>
-        configuration.ReadFrom.Configuration(context.Configuration));
+    // Serilog forwards events to registered providers (Azure Monitor); drop the defaults to avoid duplicate console output
+    builder.Logging.ClearProviders();
+    builder.Host.UseSerilog(
+        (context, configuration) => configuration.ReadFrom.Configuration(context.Configuration),
+        writeToProviders: true);
     builder.Services.AddControllers();
     builder.Services.AddProblemDetails();
     builder.Services.AddOpenApi();
-    builder.Services.AddApplicationInsightsTelemetry();
+    if (!string.IsNullOrEmpty(builder.Configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"]))
+    {
+        builder.Services.AddOpenTelemetry().UseAzureMonitor();
+    }
     builder.Services.AddSignalR();
     builder.Services.ConfigureAuthentication();
     builder.Services.ConfigureCors();
