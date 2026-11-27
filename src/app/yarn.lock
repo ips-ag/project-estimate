@@ -5,29 +5,29 @@ __metadata:
   version: 10
   cacheKey: 10c0
 
-"@azure/msal-browser@npm:^5.29.1":
-  version: 5.29.1
-  resolution: "@azure/msal-browser@npm:5.29.1"
+"@azure/msal-browser@npm:^5.30.0":
+  version: 5.30.0
+  resolution: "@azure/msal-browser@npm:5.30.0"
   dependencies:
-    "@azure/msal-common": "npm:16.16.2"
-  checksum: 10c0/12af96588de14213412679e5089e7a0aaff61db4506afd9374e1fae7b5f2d86d674ee32d5ee9a8369850f8f0081cd9e39dbc59b337856f4b912baba631b29763
+    "@azure/msal-common": "npm:16.17.0"
+  checksum: 10c0/e79a5d2336744dedcaa3e8b11d127371ef0b5f47f50dc4927aa3707c4c58347b966472131b1ea5a88f556cdf04fcf2ed442dec5fe7283e999e4221439c1d942f
   languageName: node
   linkType: hard
 
-"@azure/msal-common@npm:16.16.2":
-  version: 16.16.2
-  resolution: "@azure/msal-common@npm:16.16.2"
-  checksum: 10c0/49d6022354586f56425f02469c7870b85d75f7c8d1c30cc5f1ad4b15c0c078f342bfb97db004e79a6f239283e47e22aec69cd9304c0b40bd45f8c86d2bd7bcbf
+"@azure/msal-common@npm:16.17.0":
+  version: 16.17.0
+  resolution: "@azure/msal-common@npm:16.17.0"
+  checksum: 10c0/eaf74778f71b016e3387b15701069de2844d21e302e8fecc9f0b2a8994b4b0bdd6bfc080636d8518ed246bce494487fe59165298abaf811330f16f5ca7ad05d1
   languageName: node
   linkType: hard
 
-"@azure/msal-react@npm:^5.8.2":
-  version: 5.8.2
-  resolution: "@azure/msal-react@npm:5.8.2"
+"@azure/msal-react@npm:^5.8.3":
+  version: 5.8.3
+  resolution: "@azure/msal-react@npm:5.8.3"
   peerDependencies:
-    "@azure/msal-browser": ^5.29.1
+    "@azure/msal-browser": ^5.30.0
     react: ^16.8.0 || ^17 || ^18 || ^19.2.1
-  checksum: 10c0/9dee69d1689cbeeaab8250e85d3b6a2997d1ea92f6835f627645fc2af6cfebe4b5f5c5d4684ec1ab1522a25965ec097e245d06a97717855cda0de29101816292
+  checksum: 10c0/4fd78816947338bba3fad8b9b43035ada7b33ab27f07a39e45905d6be5c25d4a5914e78ddf06f96d3186fb20eb5d13d399e12366e0cedc9db8902196c26e8f43
   languageName: node
   linkType: hard
 
@@ -1236,8 +1236,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "app@workspace:."
   dependencies:
-    "@azure/msal-browser": "npm:^5.29.1"
-    "@azure/msal-react": "npm:^5.8.2"
+    "@azure/msal-browser": "npm:^5.30.0"
+    "@azure/msal-react": "npm:^5.8.3"
     "@eslint/js": "npm:^10.0.1"
     "@microsoft/signalr": "npm:^11.0.0"
     "@types/node": "npm:^26.6.6"
